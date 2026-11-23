@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Personaliza playeras, sudaderas, camisas y termos con Myckprints. Pedidos mínimos de 10 o 12 piezas, según el producto.">
+<meta name="description" content="Personaliza playeras, sudaderas, camisas, gorras y termos con Myckprints. Pedidos mínimos de 10 o 12 piezas, según el producto.">
 <link rel="canonical" href="https://myckprints.com/">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="stylesheet" href="styles.css">
@@ -21,7 +21,7 @@
 <div class="hero-copy">
 <p class="kicker"><span></span> PERSONALIZACIÓN POR PEDIDO</p>
 <h1>Dale vida a<br> tus <em>ideas<span>.</span></em></h1>
-<p class="intro">Playeras, sudaderas, camisas, termos y más con el logo de tu empresa o el diseño que tú elijas.</p>
+<p class="intro">Playeras, sudaderas, camisas, gorras, termos y más con el logo de tu empresa o el diseño que tú elijas.</p>
 <div class="actions"><a class="button dark" href="#cotizar">Cotiza tu pedido <span>↗</span></a><a class="button outline" href="#productos">Ver productos <span>↓</span></a></div>
 </div>
 <div class="hero-art"><img src="assets/avatar.webp" alt="Avatar de Myckprints con una sudadera amarilla personalizada"><span class="spark" aria-hidden="true">✦</span><div class="sticker">TU DISEÑO<br><strong>TU ESTILO</strong></div></div>
@@ -31,9 +31,13 @@
 <div class="section-title"><h2>¿Qué personalizamos?</h2><p>Elige el producto y cuéntanos qué quieres imprimir.</p></div>
 <div class="grid">
 <article><img src="assets/playeras.webp" alt="Ejemplo de playera negra estampada" loading="lazy"><a href="#cotizar" data-product="Playeras">Playeras <span>↗</span></a></article>
-<article><img src="assets/sudaderas.webp" alt="Ejemplo de sudadera amarilla estampada" loading="lazy"><a href="#cotizar" data-product="Sudaderas">Sudaderas <span>↗</span></a></article>
+<article><img src="assets/sudaderas.webp" alt="Ejemplo de sudadera amarilla estampada" loading="lazy"><a href="#cotizar" data-product="Sudaderas con capucha">Sudaderas con capucha <span>↗</span></a></article>
 <article><img src="assets/camisas.webp" alt="Ejemplo de camisa blanca personalizada" loading="lazy"><a href="#cotizar" data-product="Camisas">Camisas <span>↗</span></a></article>
 <article><img src="assets/termos.webp" alt="Ejemplo de termo negro personalizado" loading="lazy"><a href="#cotizar" data-product="Termos">Termos <span>↗</span></a></article>
+<article><img src="assets/playeras-polo.webp" alt="Ejemplo de playera polo azul marino personalizada" loading="lazy"><a href="#cotizar" data-product="Playeras polo">Playeras polo <span>↗</span></a></article>
+<article><img src="assets/gorras.webp" alt="Ejemplo de gorra personalizada con visera naranja" loading="lazy"><a href="#cotizar" data-product="Gorras">Gorras <span>↗</span></a></article>
+<article><img src="assets/sudaderas-sin-capucha.webp" alt="Ejemplo de sudadera verde de cuello redondo sin capucha" loading="lazy"><a href="#cotizar" data-product="Sudaderas sin capucha">Sudaderas sin capucha <span>↗</span></a></article>
+<article><img src="assets/playeras-manga-larga.webp" alt="Ejemplo de playera blanca de manga larga estampada" loading="lazy"><a href="#cotizar" data-product="Playeras de manga larga">Playeras de manga larga <span>↗</span></a></article>
 </div>
 </section>
 <section class="steps" id="como-pedir"><div class="wrap">
@@ -43,7 +47,7 @@
 <section class="quote wrap" id="cotizar">
 <div><p class="kicker"><span></span> COTIZACIONES</p><h2>Hablemos de<br>tu proyecto.</h2><p>Prepara tu mensaje aquí y envíanoslo por Instagram. También puedes escribirnos en Facebook.</p><a href="https://www.facebook.com/profile.php?id=61562440967950">Contactar por Facebook ↗</a></div>
 <form id="quote-form">
-<label for="product">Producto</label><select id="product" required><option value="">Selecciona un producto</option><option>Playeras</option><option>Sudaderas</option><option>Camisas</option><option>Termos</option><option>Otro</option></select>
+<label for="product">Producto</label><select id="product" required><option value="">Selecciona un producto</option><option>Playeras</option><option>Sudaderas con capucha</option><option>Camisas</option><option>Termos</option><option>Playeras polo</option><option>Gorras</option><option>Sudaderas sin capucha</option><option>Playeras de manga larga</option><option>Otro</option></select>
 <label for="quantity">Cantidad</label><input id="quantity" type="number" min="10" step="1" required aria-describedby="minimum" placeholder="Ej. 12"><small id="minimum">Mínimo de 10 o 12 piezas según el producto. Lo confirmamos al cotizar.</small>
 <label for="details">Cuéntanos sobre tu diseño</label><textarea id="details" rows="3" placeholder="Logo, colores, tallas u otros detalles"></textarea>
 <button class="button dark" type="submit">Preparar mensaje <span>↗</span></button>
