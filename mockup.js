@@ -52,6 +52,7 @@ function initializeEditor(product) {
     views.reverso = createView(product.back);
   }
   let side = 'frente';
+  let drag;
   let color = 'BK';
 
   if (product.colors) {
@@ -151,6 +152,58 @@ function initializeEditor(product) {
     }
   }
 
+  artwork.addEventListener('pointerdown', (event) => {
+    const view = views[side];
+    if (drag || !view.image || event.button !== 0) {
+      return;
+    }
+
+    const bounds = artwork.getBoundingClientRect();
+    drag = {
+      pointerId: event.pointerId,
+      view,
+      image: view.image,
+      gripX: (event.clientX - bounds.left) / bounds.width,
+      gripY: (event.clientY - bounds.top) / bounds.height,
+    };
+    artwork.setPointerCapture(event.pointerId);
+  });
+
+  artwork.addEventListener('pointermove', (event) => {
+    if (event.pointerId !== drag?.pointerId) {
+      return;
+    }
+    const view = views[side];
+    if (view !== drag.view || view.image !== drag.image) {
+      artwork.releasePointerCapture(event.pointerId);
+      return;
+    }
+
+    const area = printArea.getBoundingClientRect();
+    const bounds = artwork.getBoundingClientRect();
+    const availableX = area.width - bounds.width;
+    const availableY = area.height - bounds.height;
+    if (availableX > 0.5) {
+      const x = event.clientX - area.left - bounds.width * drag.gripX;
+      view.horizontal = positionPercent(x, availableX);
+    }
+    if (availableY > 0.5) {
+      const y = event.clientY - area.top - bounds.height * drag.gripY;
+      view.vertical = positionPercent(y, availableY);
+    }
+    render();
+  });
+
+  artwork.addEventListener('lostpointercapture', (event) => {
+    if (event.pointerId === drag?.pointerId) {
+      drag = undefined;
+    }
+  });
+
+  function positionPercent(offset, available) {
+    return Math.round(Math.max(0, Math.min(100, offset / available * 100)));
+  }
+
   for (const button of viewButtons) {
     button.addEventListener('click', () => {
       if (side !== button.dataset.side) {
@@ -184,6 +237,7 @@ function initializeEditor(product) {
 
     const image = new Image();
     image.alt = '';
+    image.draggable = false;
     image.src = URL.createObjectURL(file);
     view.message = 'Cargando diseño…';
     render();

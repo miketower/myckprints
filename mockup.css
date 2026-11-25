@@ -40,7 +40,18 @@
 .print-area{position:absolute;pointer-events:none}
 .mockup-stage[data-empty=true] .print-area{outline:1px dashed #b20059;background:#f0007912}
 #artwork{position:absolute}
-#artwork img{height:100%;object-fit:fill}
+#artwork img{
+  height:100%;
+  object-fit:fill;
+  pointer-events:auto;
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+}
+#artwork img:active{cursor:grabbing}
+.mockup-stage[data-empty=false]:has(#artwork:hover) .print-area{
+  outline:1px dashed #b20059;
+}
 .editor-controls{padding:22px}
 .editor-controls input[type=file]{font-size:14px}
 .editor-controls input[type=range]{padding:0;accent-color:var(--pink)}
