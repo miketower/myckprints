@@ -6,7 +6,7 @@
   <meta name="description" content="Prueba tu logo o diseño en productos personalizados de Myckprints.">
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="stylesheet" href="styles.css?v=3">
-  <link rel="stylesheet" href="mockup.css">
+  <link rel="stylesheet" href="mockup.css?v=2">
   <title>Editor de mockups — Myckprints</title>
 </head>
 <body>
@@ -31,11 +31,17 @@
         </div>
         <div class="mockup-stage" id="mockup-stage" data-empty="true">
           <img id="mockup-template" width="600" height="600" alt="">
+          <canvas id="garment-preview" width="600" height="600" aria-hidden="true" hidden></canvas>
           <div class="print-area" id="print-area" aria-hidden="true"><div id="artwork"></div></div>
         </div>
       </section>
       <section class="editor-controls" aria-labelledby="design-title">
         <h2 id="design-title">Tu diseño</h2>
+        <fieldset id="garment-colors" hidden>
+          <legend>Color de playera <span class="garment-model">JHK TSRA150</span></legend>
+          <div id="garment-swatches" class="garment-swatches"></div>
+          <p class="file-help garment-color-help">Color seleccionado <strong id="garment-color-value">BK</strong>. Los tonos en pantalla son aproximados.</p>
+        </fieldset>
         <label for="design-file" id="upload-label">Sube tu logo o diseño</label>
         <input type="file" id="design-file" accept="image/png,image/jpeg,image/webp" aria-describedby="file-help">
         <p class="file-help" id="file-help">PNG, JPG o WebP, hasta 10 MB. Tu archivo se procesa en tu navegador.</p>
@@ -58,6 +64,6 @@
       </section>
     </div>
   </main>
-  <script src="mockup.js" defer></script>
+  <script src="mockup.js?v=2" defer></script>
 </body>
 </html>

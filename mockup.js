@@ -1,5 +1,14 @@
+// Approximate screen colors sampled from the JHK TSRA150 reference.
+const tsra150Colors = {
+  BT: '#f6dba5', WH: '#ffffff', GM: '#787c76', GF: '#494c4d', BK: '#1c1c1a',
+  LY: '#f1ed80', RB: '#006db1', FU: '#bb3894', PK: '#f9d1d8', PU: '#372361',
+  SK: '#7bcddd', TU: '#00b7be', BU: '#700438', RD: '#e51840', NY: '#202f40',
+  MG: '#8bd0bb', KG: '#008a63', OR: '#f36d26', CH: '#301818', DN: '#39475e',
+  LM: '#89c83f', SY: '#ffc320', SA: '#d8ad7a',
+};
+
 const products = new Map([
-  ['playeras', { name: 'Playera de manga corta', quote: 'Playeras', front: [36, 34, 28, 34], back: [36, 28, 28, 38] }],
+  ['playeras', { name: 'Playera de manga corta', quote: 'Playeras', front: [31, 25, 38.5, 45], back: [29, 19.3, 42, 50], colors: tsra150Colors }],
   ['sudaderas', { name: 'Sudadera con capucha', quote: 'Sudaderas con capucha', front: [36, 39, 28, 20] }],
   ['camisas', { name: 'Camisa', quote: 'Camisas', front: [54, 36, 12, 15] }],
   ['termos', { name: 'Termo', quote: 'Termos', front: [42, 35, 16, 33] }],
@@ -23,6 +32,10 @@ function initializeEditor(product) {
   const editor = document.querySelector('#editor');
   const stage = document.querySelector('#mockup-stage');
   const template = document.querySelector('#mockup-template');
+  const garmentPreview = document.querySelector('#garment-preview');
+  const colorPicker = document.querySelector('#garment-colors');
+  const colorChoices = document.querySelector('#garment-swatches');
+  const colorValue = document.querySelector('#garment-color-value');
   const printArea = document.querySelector('#print-area');
   const artwork = document.querySelector('#artwork');
   const fileInput = document.querySelector('#design-file');
@@ -39,6 +52,32 @@ function initializeEditor(product) {
     views.reverso = createView(product.back);
   }
   let side = 'frente';
+  let color = 'BK';
+
+  if (product.colors) {
+    colorPicker.hidden = false;
+    for (const [code, hex] of Object.entries(product.colors)) {
+      const option = document.createElement('label');
+      const input = document.createElement('input');
+      const swatch = document.createElement('span');
+      input.type = 'radio';
+      input.name = 'garment-color';
+      input.value = code;
+      input.checked = code === color;
+      swatch.textContent = code;
+      swatch.style.setProperty('--swatch', hex);
+      option.append(input, swatch);
+      colorChoices.append(option);
+    }
+
+    colorChoices.addEventListener('change', (event) => {
+      color = event.target.value;
+      colorValue.textContent = color;
+      if (!download.disabled) {
+        paintGarment();
+      }
+    });
+  }
 
   title.textContent = product.name;
   document.title = `${product.name} — Editor de mockups | Myckprints`;
@@ -61,6 +100,7 @@ function initializeEditor(product) {
       left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%`,
     });
     download.disabled = true;
+    garmentPreview.hidden = true;
     template.alt = `${product.name}, vista de ${side}`;
     template.src = `assets/mockups/${slug}-${side}.webp`;
     uploadLabel.textContent = product.back ? `Diseño del ${side}` : 'Sube tu logo o diseño';
@@ -181,7 +221,31 @@ function initializeEditor(product) {
     fileInput.focus();
   });
 
+  function paintGarment() {
+    garmentPreview.hidden = !product.colors || color === 'BK';
+    if (garmentPreview.hidden) {
+      return;
+    }
+    const context = garmentPreview.getContext('2d', { willReadFrequently: true });
+    const { width, height } = garmentPreview;
+    context.drawImage(template, 0, 0, width, height);
+    const pixels = context.getImageData(0, 0, width, height);
+    const rgb = product.colors[color].slice(1).match(/../g).map((channel) => parseInt(channel, 16));
+
+    // The TSRA150 templates have black fabric on a pale studio background.
+    // Fade the tint at the edges so the background and shadows stay intact.
+    for (let i = 0; i < pixels.data.length; i += 4) {
+      const shade = pixels.data[i] * .299 + pixels.data[i + 1] * .587 + pixels.data[i + 2] * .114;
+      const opacity = Math.max(0, Math.min(1, (162 - shade) / 130));
+      for (let channel = 0; channel < 3; channel++) {
+        pixels.data[i + channel] += (rgb[channel] - 24) * opacity;
+      }
+    }
+    context.putImageData(pixels, 0, 0);
+  }
+
   template.addEventListener('load', () => {
+    paintGarment();
     download.disabled = false;
   });
 
@@ -199,9 +263,10 @@ function initializeEditor(product) {
     const context = canvas.getContext('2d');
     const [left, top] = view.area;
     const box = artworkBox(view);
-    context.drawImage(template, 0, 0, 600, 600);
+    context.drawImage(garmentPreview.hidden ? template : garmentPreview, 0, 0, 600, 600);
     context.drawImage(view.image, (left + box.x) * 6, (top + box.y) * 6, box.width * 6, box.height * 6);
-    const filename = `myckprints-${slug}-${side}.png`;
+    const colorSuffix = product.colors ? `-${color.toLowerCase()}` : '';
+    const filename = `myckprints-${slug}${colorSuffix}-${side}.png`;
 
     canvas.toBlob((blob) => {
       if (!blob) {
