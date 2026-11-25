@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Prueba tu logo o diseño en productos personalizados de Myckprints.">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="stylesheet" href="styles.css?v=3">
+  <link rel="stylesheet" href="mockup.css">
+  <title>Editor de mockups — Myckprints</title>
+</head>
+<body>
+  <div class="notice">Pedidos mínimos de 10 o 12 piezas, según el producto</div>
+  <header class="wrap header">
+    <a class="brand" href="./" aria-label="Myckprints, inicio"><img src="assets/logo-horizontal.png" width="878" height="262" alt=""></a>
+    <a class="button outline small" href="./#productos">← Volver al catálogo</a>
+  </header>
+  <main class="wrap mockup">
+    <p class="kicker"><span></span> EDITOR DE MOCKUPS</p>
+    <h1 id="mockup-title">Personaliza tu producto</h1>
+    <p id="editor-error" role="status" hidden>Elige un producto desde el <a href="./#productos">catálogo</a> para empezar.</p>
+    <noscript>Activa JavaScript para cargar tu diseño y visualizarlo en el producto.</noscript>
+    <div class="editor" id="editor" hidden>
+      <section class="preview-panel" aria-label="Vista previa">
+        <div class="preview-header">
+          <strong>Vista previa</strong>
+          <div class="view-switch" id="view-switch" role="group" aria-label="Lado del producto" hidden>
+            <button type="button" data-side="frente" aria-pressed="true">Frente</button>
+            <button type="button" data-side="reverso" aria-pressed="false">Reverso</button>
+          </div>
+        </div>
+        <div class="mockup-stage" id="mockup-stage" data-empty="true">
+          <img id="mockup-template" width="600" height="600" alt="">
+          <div class="print-area" id="print-area" aria-hidden="true"><div id="artwork"></div></div>
+        </div>
+      </section>
+      <section class="editor-controls" aria-labelledby="design-title">
+        <h2 id="design-title">Tu diseño</h2>
+        <label for="design-file" id="upload-label">Sube tu logo o diseño</label>
+        <input type="file" id="design-file" accept="image/png,image/jpeg,image/webp" aria-describedby="file-help">
+        <p class="file-help" id="file-help">PNG, JPG o WebP, hasta 10 MB. Tu archivo se procesa en tu navegador.</p>
+        <p id="design-status" role="status"></p>
+        <fieldset id="placement" disabled>
+          <legend>Ajustar diseño</legend>
+          <label for="scale">Tamaño</label>
+          <input type="range" id="scale" min="15" max="100" value="70">
+          <label for="horizontal">Posición horizontal</label>
+          <input type="range" id="horizontal" min="0" max="100" value="50">
+          <label for="vertical">Posición vertical</label>
+          <input type="range" id="vertical" min="0" max="100" value="50">
+          <div class="actions">
+            <button type="button" class="button outline small" id="remove-design">Quitar diseño</button>
+            <button type="button" class="button outline small" id="download-mockup">Descargar vista</button>
+          </div>
+        </fieldset>
+        <p class="file-help">La ubicación y el tamaño de impresión se confirman al cotizar.</p>
+        <a class="button dark" id="mockup-quote" href="./#cotizar">Cotizar este producto ↗</a>
+      </section>
+    </div>
+  </main>
+  <script src="mockup.js" defer></script>
+</body>
+</html>

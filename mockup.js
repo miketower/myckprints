@@ -1,0 +1,219 @@
+const products = new Map([
+  ['playeras', { name: 'Playera de manga corta', quote: 'Playeras', front: [36, 34, 28, 34], back: [36, 28, 28, 38] }],
+  ['sudaderas', { name: 'Sudadera con capucha', quote: 'Sudaderas con capucha', front: [36, 39, 28, 20] }],
+  ['camisas', { name: 'Camisa', quote: 'Camisas', front: [54, 36, 12, 15] }],
+  ['termos', { name: 'Termo', quote: 'Termos', front: [42, 35, 16, 33] }],
+  ['playeras-polo', { name: 'Playera polo', quote: 'Playeras polo', front: [54, 34, 13, 16], back: [36, 29, 28, 34] }],
+  ['gorras', { name: 'Gorra', quote: 'Gorras', front: [35, 35, 30, 21] }],
+  ['sudaderas-sin-capucha', { name: 'Sudadera sin capucha', quote: 'Sudaderas sin capucha', front: [36, 34, 28, 35] }],
+  ['playeras-manga-larga', { name: 'Playera de manga larga', quote: 'Playeras de manga larga', front: [37, 34, 26, 34], back: [37, 29, 26, 36] }],
+]);
+
+const slug = new URLSearchParams(window.location.search).get('producto');
+const selectedProduct = products.get(slug);
+
+if (selectedProduct) {
+  initializeEditor(selectedProduct);
+} else {
+  document.querySelector('#editor-error').hidden = false;
+}
+
+function initializeEditor(product) {
+  const title = document.querySelector('#mockup-title');
+  const editor = document.querySelector('#editor');
+  const stage = document.querySelector('#mockup-stage');
+  const template = document.querySelector('#mockup-template');
+  const printArea = document.querySelector('#print-area');
+  const artwork = document.querySelector('#artwork');
+  const fileInput = document.querySelector('#design-file');
+  const uploadLabel = document.querySelector('#upload-label');
+  const status = document.querySelector('#design-status');
+  const placement = document.querySelector('#placement');
+  const viewSwitch = document.querySelector('#view-switch');
+  const viewButtons = viewSwitch.querySelectorAll('[data-side]');
+  const download = document.querySelector('#download-mockup');
+  const ranges = Object.fromEntries(Array.from(placement.querySelectorAll('input[type=range]'), (input) => [input.id, input]));
+
+  const views = { frente: createView(product.front) };
+  if (product.back) {
+    views.reverso = createView(product.back);
+  }
+  let side = 'frente';
+
+  title.textContent = product.name;
+  document.title = `${product.name} — Editor de mockups | Myckprints`;
+  const quoteUrl = new URL('./', window.location.href);
+  quoteUrl.searchParams.set('cotizar', product.quote);
+  quoteUrl.hash = 'cotizar';
+  document.querySelector('#mockup-quote').href = quoteUrl.href;
+  viewSwitch.hidden = !product.back;
+  editor.hidden = false;
+  showSide();
+
+  function createView(area) {
+    return { area, image: null, scale: 70, horizontal: 50, vertical: 50, upload: 0, message: '' };
+  }
+
+  function showSide() {
+    const view = views[side];
+    const [left, top, width, height] = view.area;
+    Object.assign(printArea.style, {
+      left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%`,
+    });
+    download.disabled = true;
+    template.alt = `${product.name}, vista de ${side}`;
+    template.src = `assets/mockups/${slug}-${side}.webp`;
+    uploadLabel.textContent = product.back ? `Diseño del ${side}` : 'Sube tu logo o diseño';
+    fileInput.value = '';
+    for (const button of viewButtons) {
+      button.setAttribute('aria-pressed', String(button.dataset.side === side));
+    }
+    render();
+  }
+
+  function artworkBox(view) {
+    const [, , areaWidth, areaHeight] = view.area;
+    const ratio = view.image.naturalWidth / view.image.naturalHeight;
+    const scale = view.scale / 100;
+    const width = Math.min(areaWidth, areaHeight * ratio) * scale;
+    const height = width / ratio;
+    return {
+      x: (areaWidth - width) * view.horizontal / 100,
+      y: (areaHeight - height) * view.vertical / 100,
+      width,
+      height,
+    };
+  }
+
+  function render() {
+    const view = views[side];
+    status.textContent = view.message;
+    placement.disabled = !view.image;
+    stage.dataset.empty = String(!view.image);
+    for (const [name, input] of Object.entries(ranges)) {
+      input.value = view[name];
+    }
+    if (!view.image) {
+      artwork.replaceChildren();
+      return;
+    }
+
+    const [, , areaWidth, areaHeight] = view.area;
+    const box = artworkBox(view);
+    Object.assign(artwork.style, {
+      left: `${box.x / areaWidth * 100}%`,
+      top: `${box.y / areaHeight * 100}%`,
+      width: `${box.width / areaWidth * 100}%`,
+      height: `${box.height / areaHeight * 100}%`,
+    });
+    if (artwork.firstElementChild !== view.image) {
+      artwork.replaceChildren(view.image);
+    }
+  }
+
+  for (const button of viewButtons) {
+    button.addEventListener('click', () => {
+      if (side !== button.dataset.side) {
+        side = button.dataset.side;
+        showSide();
+      }
+    });
+  }
+
+  for (const [name, input] of Object.entries(ranges)) {
+    input.addEventListener('input', () => {
+      views[side][name] = Number(input.value);
+      render();
+    });
+  }
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file) {
+      return;
+    }
+    fileInput.value = '';
+    const view = views[side];
+    const upload = ++view.upload;
+
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024) {
+      view.message = 'Selecciona una imagen PNG, JPG o WebP de hasta 10 MB.';
+      render();
+      return;
+    }
+
+    const image = new Image();
+    image.alt = '';
+    image.src = URL.createObjectURL(file);
+    view.message = 'Cargando diseño…';
+    render();
+
+    try {
+      await image.decode();
+      if (view.upload === upload) {
+        if (view.image) {
+          URL.revokeObjectURL(view.image.src);
+        }
+        view.image = image;
+        view.message = `Diseño cargado: ${file.name}`;
+      }
+    } catch {
+      if (view.upload === upload) {
+        view.message = 'No se pudo abrir la imagen. Prueba con otro archivo.';
+      }
+    } finally {
+      if (view.image !== image) {
+        URL.revokeObjectURL(image.src);
+      }
+      if (view === views[side]) {
+        render();
+      }
+    }
+  });
+
+  document.querySelector('#remove-design').addEventListener('click', () => {
+    const view = views[side];
+    view.upload++;
+    URL.revokeObjectURL(view.image.src);
+    view.image = null;
+    view.message = 'Diseño eliminado.';
+    render();
+    fileInput.focus();
+  });
+
+  template.addEventListener('load', () => {
+    download.disabled = false;
+  });
+
+  template.addEventListener('error', () => {
+    const view = views[side];
+    view.message = 'No se pudo cargar la imagen del producto.';
+    render();
+  });
+
+  download.addEventListener('click', () => {
+    const view = views[side];
+    const canvas = document.createElement('canvas');
+    canvas.width = 600;
+    canvas.height = 600;
+    const context = canvas.getContext('2d');
+    const [left, top] = view.area;
+    const box = artworkBox(view);
+    context.drawImage(template, 0, 0, 600, 600);
+    context.drawImage(view.image, (left + box.x) * 6, (top + box.y) * 6, box.width * 6, box.height * 6);
+    const filename = `myckprints-${slug}-${side}.png`;
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        status.textContent = 'No se pudo descargar la vista.';
+        return;
+      }
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = filename;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, 'image/png');
+  });
+}

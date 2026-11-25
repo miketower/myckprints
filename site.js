@@ -13,11 +13,9 @@ function hideMessage() {
 
 form.addEventListener('input', hideMessage);
 
-for (const link of document.querySelectorAll('[data-product]')) {
-  link.addEventListener('click', () => {
-    product.value = link.dataset.product;
-    hideMessage();
-  });
+const requestedProduct = new URLSearchParams(window.location.search).get('cotizar');
+if (Array.from(product.options).some((option) => option.value === requestedProduct)) {
+  product.value = requestedProduct;
 }
 
 form.addEventListener('submit', (event) => {
