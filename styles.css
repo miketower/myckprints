@@ -100,7 +100,7 @@ footer{padding-right:65px}
   position:fixed;
   right:max(16px,env(safe-area-inset-right));
   bottom:max(16px,env(safe-area-inset-bottom));
-  z-index:5;
+  z-index:20;
   display:flex;
   flex-direction:column;
   align-items:flex-end;
@@ -109,12 +109,11 @@ footer{padding-right:65px}
 .whatsapp-button{
   display:grid;
   place-items:center;
-  width:56px;
-  height:56px;
+  width:60px;
+  height:60px;
   border-radius:50%;
   background:#087c44;
   color:white;
-  font:30px Arial,sans-serif;
   box-shadow:0 3px 12px #0004;
   animation:whatsapp-pulse 2.4s ease-out infinite;
 }
@@ -155,3 +154,15 @@ footer{padding-right:65px}
   70%,100%{box-shadow:0 3px 12px #0004,0 0 0 13px #087c4400}
 }
 @media(prefers-reduced-motion:reduce){.whatsapp-button{animation:none}}
+
+.social-symbols{position:absolute;overflow:hidden}
+.social-icon{
+  width:1.1em;
+  height:1.1em;
+  vertical-align:-.15em;
+  margin-right:.35em;
+  fill:currentColor;
+  flex-shrink:0;
+}
+.button .social-icon{margin-right:0}
+.whatsapp-button .social-icon{width:33px;height:33px;margin-right:0}
