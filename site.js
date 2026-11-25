@@ -45,3 +45,30 @@ document.querySelector('#copy').addEventListener('click', async () => {
     status.textContent = 'Seleccionamos el mensaje para que puedas copiarlo.';
   }
 });
+
+const whatsappTooltip = document.querySelector('#whatsapp-tooltip');
+const whatsappStatus = document.querySelector('#whatsapp-status');
+const whatsappButton = document.querySelector('.whatsapp-button');
+const whatsappDismiss = document.querySelector('#whatsapp-dismiss');
+
+const invitationTimer = window.setTimeout(() => {
+  whatsappTooltip.hidden = false;
+  whatsappStatus.textContent = document.querySelector('#whatsapp-invitation').textContent;
+}, 2000);
+
+function dismissInvitation() {
+  window.clearTimeout(invitationTimer);
+  whatsappTooltip.hidden = true;
+  whatsappStatus.textContent = '';
+  if (document.activeElement === whatsappDismiss) {
+    whatsappButton.focus();
+  }
+}
+
+whatsappDismiss.addEventListener('click', dismissInvitation);
+whatsappButton.addEventListener('click', dismissInvitation);
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !whatsappTooltip.hidden) {
+    dismissInvitation();
+  }
+});

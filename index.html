@@ -42,10 +42,10 @@
 </section>
 <section class="steps" id="como-pedir"><div class="wrap">
 <p class="kicker"><span></span> CÓMO PEDIR</p><h2>De tu idea a tu pedido.</h2>
-<ol><li><h3>Elige un producto</h3><p>Indica cuántas piezas necesitas. El mínimo es de 10 o 12 según el producto.</p></li><li><h3>Cuéntanos tu idea</h3><p>Dinos qué logo o diseño quieres usar, y cualquier detalle sobre colores o tallas.</p></li><li><h3>Pide tu cotización</h3><p>Envíanos los detalles por Instagram para confirmar el mínimo y cotizar tu pedido.</p></li></ol>
+<ol><li><h3>Elige un producto</h3><p>Indica cuántas piezas necesitas. El mínimo es de 10 o 12 según el producto.</p></li><li><h3>Cuéntanos tu idea</h3><p>Dinos qué logo o diseño quieres usar, y cualquier detalle sobre colores o tallas.</p></li><li><h3>Pide tu cotización</h3><p>Envíanos los detalles por Instagram o WhatsApp para confirmar el mínimo y cotizar tu pedido.</p></li></ol>
 </div></section>
 <section class="quote wrap" id="cotizar">
-<div><p class="kicker"><span></span> COTIZACIONES</p><h2>Hablemos de<br>tu proyecto.</h2><p>Prepara tu mensaje aquí y envíanoslo por Instagram. También puedes escribirnos en Facebook.</p><a href="https://www.facebook.com/profile.php?id=61562440967950">Contactar por Facebook ↗</a></div>
+<div><p class="kicker"><span></span> COTIZACIONES</p><h2>Hablemos de<br>tu proyecto.</h2><p>Prepara tu mensaje aquí y envíanoslo por Instagram. También puedes escribirnos por WhatsApp o Facebook.</p><div class="actions contact-links"><a href="https://www.instagram.com/myckprints/">Instagram ↗</a><a href="https://www.facebook.com/profile.php?id=61562440967950">Facebook ↗</a><a href="https://wa.me/528110601127">WhatsApp ↗</a></div></div>
 <form id="quote-form">
 <label for="product">Producto</label><select id="product" required><option value="">Selecciona un producto</option><option>Playeras</option><option>Sudaderas con capucha</option><option>Camisas</option><option>Termos</option><option>Playeras polo</option><option>Gorras</option><option>Sudaderas sin capucha</option><option>Playeras de manga larga</option><option>Otro</option></select>
 <label for="quantity">Cantidad</label><input id="quantity" type="number" min="10" step="1" required aria-describedby="minimum" placeholder="Ej. 12"><small id="minimum">Mínimo de 10 o 12 piezas según el producto. Lo confirmamos al cotizar.</small>
@@ -56,7 +56,17 @@
 </form>
 </section>
 </main>
-<footer><div class="wrap footer"><a class="brand" href="#" aria-label="Myckprints, inicio"><img src="assets/logo-horizontal.png" width="878" height="262" alt=""></a><span>myckprints.com</span><div><a href="https://www.instagram.com/myckprints/">Instagram ↗</a><a href="https://www.facebook.com/profile.php?id=61562440967950">Facebook ↗</a></div></div></footer>
+<footer><div class="wrap footer"><a class="brand" href="#" aria-label="Myckprints, inicio"><img src="assets/logo-horizontal.png" width="878" height="262" alt=""></a><span>myckprints.com</span><div><a href="https://www.instagram.com/myckprints/">Instagram ↗</a><a href="https://www.facebook.com/profile.php?id=61562440967950">Facebook ↗</a><a href="https://wa.me/528110601127">WhatsApp ↗</a></div></div></footer>
+<aside class="whatsapp-widget" aria-label="Contacto por WhatsApp">
+  <div class="whatsapp-tooltip" id="whatsapp-tooltip" hidden>
+    <span id="whatsapp-invitation">¿Tienes dudas? Pide informes por WhatsApp.</span>
+    <button type="button" id="whatsapp-dismiss" aria-label="Cerrar invitación">×</button>
+  </div>
+  <span class="visually-hidden" id="whatsapp-status" role="status"></span>
+  <a class="whatsapp-button" href="https://wa.me/528110601127" aria-label="Pedir informes por WhatsApp">
+    <span aria-hidden="true">☎</span>
+  </a>
+</aside>
 <script src="site.js" defer></script>
 </body>
 </html>

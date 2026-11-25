@@ -91,3 +91,67 @@ h1{font-size:clamp(48px,12vw,70px)}
 .header{gap:8px}
 .header .button{font-size:12px;gap:7px;padding-inline:9px}
 }
+
+.contact-links a{font-weight:800;text-decoration:underline}
+.contact-links a:hover{color:var(--pink)}
+.footer div{flex-wrap:wrap;gap:12px 24px}
+footer{padding-right:65px}
+.whatsapp-widget{
+  position:fixed;
+  right:max(16px,env(safe-area-inset-right));
+  bottom:max(16px,env(safe-area-inset-bottom));
+  z-index:5;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:10px;
+}
+.whatsapp-button{
+  display:grid;
+  place-items:center;
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  background:#087c44;
+  color:white;
+  font:30px Arial,sans-serif;
+  box-shadow:0 3px 12px #0004;
+  animation:whatsapp-pulse 2.4s ease-out infinite;
+}
+.whatsapp-button:hover{background:#056437}
+.whatsapp-tooltip{
+  width:min(240px,calc(100vw - 32px));
+  padding:12px 12px 12px 15px;
+  border:1px solid #d8d3ca;
+  border-radius:10px;
+  background:white;
+  box-shadow:0 4px 18px #0002;
+  font-size:14px;
+  font-weight:700;
+}
+.whatsapp-tooltip:not([hidden]){display:flex;align-items:center;gap:8px}
+.whatsapp-tooltip button{
+  flex:none;
+  width:32px;
+  height:32px;
+  border:0;
+  border-radius:5px;
+  background:var(--paper);
+  color:var(--ink);
+  font:22px Arial,sans-serif;
+  cursor:pointer;
+}
+.visually-hidden{
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  overflow:hidden;
+  clip-path:inset(50%);
+  white-space:nowrap;
+}
+@keyframes whatsapp-pulse{
+  0%{box-shadow:0 3px 12px #0004,0 0 0 0 #087c4470}
+  70%,100%{box-shadow:0 3px 12px #0004,0 0 0 13px #087c4400}
+}
+@media(prefers-reduced-motion:reduce){.whatsapp-button{animation:none}}
