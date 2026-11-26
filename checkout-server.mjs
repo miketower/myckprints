@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { shirtPricing } from './pricing.mjs';
+import { shirtPricing } from './pricing.js';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT || 3000);
@@ -19,7 +19,7 @@ const mpReady = Boolean(mpToken?.startsWith('TEST-') && base.protocol === 'https
 const paypalReady = Boolean(paypalId && paypalSecret);
 const mpApi = 'https://api.mercadopago.com';
 const paypalApi = 'https://api-m.sandbox.paypal.com';
-const staticFiles = new Set(['index.html', 'mockup.html', 'mockup.css', 'mockup.js', 'site.js', 'styles.css', 'pricing.mjs', 'checkout.html', 'checkout.js']);
+const staticFiles = new Set(['index.html', 'mockup.html', 'mockup.css', 'mockup.js', 'site.js', 'styles.css', 'pricing.js', 'checkout.html', 'checkout.js']);
 const contentTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.png': 'image/png', '.webp': 'image/webp' };
 
 class CheckoutError extends Error {

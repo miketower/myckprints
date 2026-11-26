@@ -1,4 +1,4 @@
-import { shirtPricing } from "./pricing.mjs";
+import { shirtPricing } from "./pricing.js";
 
 // Approximate screen colors sampled from the JHK TSRA150 reference.
 const tsra150Colors = {
