@@ -61,12 +61,22 @@
           </div>
         </fieldset>
         <p class="file-help">La ubicación y el tamaño de impresión se confirman al cotizar.</p>
+        <div id="print-options" hidden>
+          <label for="print-sides">Lados a imprimir</label>
+          <select id="print-sides" aria-describedby="print-extra">
+            <option value="frente">Frente</option>
+            <option value="reverso">Reverso</option>
+            <option value="ambos">Frente y reverso</option>
+          </select>
+          <p class="file-help" id="print-extra"></p>
+        </div>
         <section id="mockup-order" aria-label="Precio y cantidad" hidden>
           <label for="order-quantity">Cantidad de piezas</label>
           <input id="order-quantity" type="number" step="1" required aria-describedby="order-minimum">
           <p id="order-minimum" class="file-help"></p>
           <dl class="order-summary">
-            <dt>Precio por pieza</dt><dd id="order-unit"></dd>
+            <dt>Precio base por pieza</dt><dd id="order-unit"></dd>
+            <dt id="order-extra-label" hidden>Segunda impresión por pieza</dt><dd id="order-extra" hidden></dd>
             <dt>Subtotal</dt><dd id="order-subtotal"></dd>
             <dt>Envío fijo</dt><dd id="order-shipping"></dd>
             <dt><strong>Total</strong></dt><dd><output id="order-total" for="order-quantity"></output></dd>
@@ -76,12 +86,12 @@
             <button class="button outline" type="button" data-payment="paypal" disabled>PayPal Checkout</button>
           </div>
           <p class="file-help" id="checkout-status" role="status">Modo de prueba. No se realizan cobros reales.</p>
-          <p class="file-help order-help"><strong>Pregunta por mayoreo.</strong> Los precios mejoran por volumen. <a href="https://wa.me/528110601127?text=Hola%2C%20quiero%20preguntar%20por%20precios%20de%20mayoreo%20para%20playeras." target="_blank" rel="noopener">Consulta por WhatsApp ↗</a></p>
+          <p class="file-help order-help"><strong>Pregunta por mayoreo.</strong> Los precios mejoran por volumen. <a href="https://wa.me/528110601127?text=Hola%2C%20quiero%20preguntar%20por%20precios%20de%20mayoreo%20para%20este%20producto." target="_blank" rel="noopener">Consulta por WhatsApp ↗</a></p>
         </section>
         <a class="button dark" id="mockup-quote" href="./#cotizar">Cotizar este producto ↗</a>
       </section>
     </div>
   </main>
-  <script type="module" src="mockup.js?v=8"></script>
+  <script type="module" src="mockup.js?v=10"></script>
 </body>
 </html>

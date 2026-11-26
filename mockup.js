@@ -1,4 +1,4 @@
-import { checkoutProducts } from './pricing.js?v=2';
+import { checkoutProducts, extraPrintPrice, unitPrice } from './pricing.js?v=3';
 
 // Approximate screen colors sampled from the JHK TSRA150 reference.
 const tsra150Colors = {
@@ -11,7 +11,7 @@ const tsra150Colors = {
 
 const products = new Map([
   ['playeras', { name: 'Playera de manga corta', quote: 'Playeras', pricing: checkoutProducts.get('playeras'), front: [31, 25, 38.5, 45], back: [29, 19.3, 42, 50], colors: tsra150Colors }],
-  ['sudaderas', { name: 'Sudadera con capucha', quote: 'Sudaderas con capucha', front: [36, 39, 28, 20] }],
+  ['sudaderas', { name: 'Sudadera con capucha', quote: 'Sudaderas con capucha', pricing: checkoutProducts.get('sudaderas'), front: [36.7, 31.5, 27.6, 23.6], back: [28.8, 34.6, 40.6, 37.3], baseColor: 'SY', initialColor: 'WH', sizes: 'S–3XL', colors: { WH: tsra150Colors.WH, AS: '#d0d1cc', BK: tsra150Colors.BK, RB: tsra150Colors.RB, RD: tsra150Colors.RD, NY: tsra150Colors.NY } }],
   ['camisas', { name: 'Camisa', quote: 'Camisas', front: [54, 36, 12, 15] }],
   ['termos', { name: 'Termo', quote: 'Termos', front: [42, 35, 16, 33] }],
   ['playeras-polo', { name: 'Playera polo', quote: 'Playeras polo', front: [54, 34, 13, 16], back: [36, 29, 28, 34] }],
@@ -56,7 +56,11 @@ function initializeEditor(product) {
   let side = 'frente';
   let drag;
   const baseColor = product.baseColor || 'BK';
-  let color = baseColor;
+  let color = product.initialColor || baseColor;
+  const printSides = document.querySelector('#print-sides');
+  let preferredSides;
+  let refreshPrice = () => {};
+  const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', currencyDisplay: 'code' });
 
   if (product.colors) {
     colorPicker.hidden = false;
@@ -92,12 +96,37 @@ function initializeEditor(product) {
   quoteUrl.hash = 'cotizar';
   const quoteLink = document.querySelector('#mockup-quote');
   quoteLink.href = quoteUrl.href;
+  if (product.back) {
+    document.querySelector('#print-options').hidden = false;
+    document.querySelector('#print-extra').textContent = `Imprimir frente y reverso agrega ${currency.format(extraPrintPrice)} por prenda.`;
+    printSides.addEventListener('change', () => {
+      preferredSides = printSides.value;
+      syncPrintSides();
+    });
+    syncPrintSides();
+  }
+
+  function syncPrintSides() {
+    if (!product.back) return;
+    const bothDesigns = Boolean(views.frente.image && views.reverso.image);
+    const choice = bothDesigns ? 'ambos' : preferredSides ?? (views.reverso.image ? 'reverso' : 'frente');
+    if (bothDesigns !== printSides.disabled || choice !== quoteUrl.searchParams.get('impresion')) {
+      printSides.disabled = bothDesigns;
+      printSides.value = choice;
+      quoteUrl.searchParams.set('impresion', choice);
+      quoteLink.href = quoteUrl.href;
+      refreshPrice();
+    }
+  }
+
   if (product.pricing) {
     const { minimum, unit, shipping } = product.pricing;
     const quantity = document.querySelector('#order-quantity');
     const subtotal = document.querySelector('#order-subtotal');
     const total = document.querySelector('#order-total');
-    const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', currencyDisplay: 'code' });
+    const extraLabel = document.querySelector('#order-extra-label');
+    const extra = document.querySelector('#order-extra');
+    extra.textContent = currency.format(extraPrintPrice);
     quantity.min = minimum;
     quantity.max = 10000;
     const checkoutStatus = document.querySelector('#checkout-status');
@@ -136,7 +165,7 @@ function initializeEditor(product) {
           const response = await fetch('api/checkout/orders', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ provider: button.dataset.payment, product: slug, quantity: quantity.valueAsNumber, color }),
+            body: JSON.stringify({ provider: button.dataset.payment, product: slug, quantity: quantity.valueAsNumber, color, printSides: printSides.value }),
           });
           const result = await response.json();
           if (!response.ok) throw new Error(result.error);
@@ -156,9 +185,11 @@ function initializeEditor(product) {
 
     function updatePrice() {
       const count = quantity.valueAsNumber;
-      const valid = quantity.validity.valid && Number.isSafeInteger(count * unit + shipping);
-      subtotal.textContent = valid ? currency.format(count * unit) : '—';
-      total.value = valid ? currency.format(count * unit + shipping) : '—';
+      const price = unitPrice(product.pricing, printSides.value);
+      const valid = quantity.validity.valid && Number.isSafeInteger(count * price + shipping);
+      extraLabel.hidden = extra.hidden = printSides.value !== 'ambos';
+      subtotal.textContent = valid ? currency.format(count * price) : '—';
+      total.value = valid ? currency.format(count * price + shipping) : '—';
       if (valid) {
         quoteUrl.searchParams.set('cantidad', count);
       } else {
@@ -168,6 +199,7 @@ function initializeEditor(product) {
       updatePaymentButtons();
     }
 
+    refreshPrice = updatePrice;
     quantity.addEventListener('input', updatePrice);
     window.addEventListener('pageshow', (event) => {
       if (event.persisted) {
@@ -221,6 +253,7 @@ function initializeEditor(product) {
 
   function render() {
     const view = views[side];
+    syncPrintSides();
     status.textContent = view.message;
     placement.disabled = !view.image;
     stage.dataset.empty = String(!view.image);
@@ -380,14 +413,20 @@ function initializeEditor(product) {
     const rgb = product.colors[color].slice(1).match(/../g).map((channel) => parseInt(channel, 16));
 
     const whiteTemplate = baseColor === 'WH';
+    const yellowTemplate = baseColor === 'SY';
+    const yellowCenter = side === 'frente' ? 184 : 162;
     // Use brightness for black fabric and coolness for white fabric against the warm backdrop.
     for (let i = 0; i < pixels.data.length; i += 4) {
       const shade = pixels.data[i] * .299 + pixels.data[i + 1] * .587 + pixels.data[i + 2] * .114;
-      const mask = whiteTemplate ? (pixels.data[i + 2] - pixels.data[i] + 5) / 5 : (162 - shade) / 130;
+      let mask = (162 - shade) / 130;
+      if (whiteTemplate) mask = (pixels.data[i + 2] - pixels.data[i] + 5) / 5;
+      if (yellowTemplate) mask = (pixels.data[i] - pixels.data[i + 2] - 12) / 72;
       const opacity = Math.max(0, Math.min(1, mask));
       for (let channel = 0; channel < 3; channel++) {
         const original = pixels.data[i + channel];
-        const tinted = whiteTemplate ? rgb[channel] + (original - 230) * .65 : original + rgb[channel] - 24;
+        let tinted = original + rgb[channel] - 24;
+        if (whiteTemplate) tinted = rgb[channel] + (original - 230) * .65;
+        if (yellowTemplate) tinted = rgb[channel] + (shade - yellowCenter) * .75;
         pixels.data[i + channel] = original + (tinted - original) * opacity;
       }
     }

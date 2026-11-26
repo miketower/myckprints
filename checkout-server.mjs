@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkoutProducts } from './pricing.js';
+import { checkoutProducts, printLabels, unitPrice } from './pricing.js';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT || 3000);
@@ -70,7 +70,7 @@ async function createPayment(order, pricing) {
       body: JSON.stringify({
         external_reference: order.id,
         items: [
-          { id: order.product, title: pricing.name, quantity: order.quantity, unit_price: pricing.unit, currency_id: 'MXN' },
+          { id: order.product, title: `${pricing.name} · ${printLabels.get(order.printSides)}`, quantity: order.quantity, unit_price: unitPrice(pricing, order.printSides), currency_id: 'MXN' },
           { id: 'envio', title: 'Envío', quantity: 1, unit_price: pricing.shipping, currency_id: 'MXN' },
         ],
         back_urls: { success: returnUrl(order), pending: returnUrl(order), failure: returnUrl(order) },
@@ -87,7 +87,7 @@ async function createPayment(order, pricing) {
       intent: 'CAPTURE',
       purchase_units: [{
         reference_id: order.id,
-        description: `${order.quantity} × ${pricing.name} con envío`,
+        description: `${order.quantity} × ${pricing.name} · ${printLabels.get(order.printSides)} · Envío incluido`,
         amount: { currency_code: 'MXN', value: order.total.toFixed(2) },
       }],
       payment_source: { paypal: { experience_context: {
@@ -212,18 +212,19 @@ async function handle(request, response) {
     return json(response, 200, { mercadopago: mpReady, paypal: paypalReady });
   }
   if (pathname === '/api/checkout/orders' && request.method === 'POST') {
-    const { provider, product, quantity, color } = (await readJson(request)) || {};
+    const { provider, product, quantity, color, printSides = 'frente' } = (await readJson(request)) || {};
     const pricing = checkoutProducts.get(product);
     if (!pricing) throw new CheckoutError(400, 'Este producto aún no está disponible para pagos de prueba.');
     if (!Number.isInteger(quantity) || quantity < pricing.minimum || quantity > 10000) {
       throw new CheckoutError(400, `Selecciona entre ${pricing.minimum} y 10,000 piezas para esta prueba.`);
     }
+    if (!printLabels.has(printSides)) throw new CheckoutError(400, 'Selecciona los lados a imprimir.');
     if (!['mercadopago', 'paypal'].includes(provider)) throw new CheckoutError(400, 'Selecciona un método de pago.');
     if (!(provider === 'paypal' ? paypalReady : mpReady)) throw new CheckoutError(503, 'Este método aún no tiene configuración de prueba.');
     const order = {
-      id: randomUUID(), provider, product, quantity,
-      color: typeof color === 'string' && /^[A-Z]{2}$/.test(color) ? color : (product === 'playeras-manga-larga' ? 'WH' : 'BK'),
-      total: quantity * pricing.unit + pricing.shipping,
+      id: randomUUID(), provider, product, quantity, printSides,
+      color: typeof color === 'string' && /^[A-Z]{2}$/.test(color) ? color : (product === 'playeras' ? 'BK' : 'WH'),
+      total: quantity * unitPrice(pricing, printSides) + pricing.shipping,
       status: 'pendiente', createdAt: new Date().toISOString(),
     };
     const payment = await createPayment(order, pricing);
