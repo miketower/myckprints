@@ -6,7 +6,7 @@
   <meta name="description" content="Prueba tu logo o diseño en productos personalizados de Myckprints.">
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="stylesheet" href="styles.css?v=3">
-  <link rel="stylesheet" href="mockup.css?v=7">
+  <link rel="stylesheet" href="mockup.css?v=8">
   <title>Editor de mockups — Myckprints</title>
 </head>
 <body>
@@ -37,16 +37,21 @@
       </section>
       <section class="editor-controls" aria-labelledby="design-title">
         <h2 id="design-title">Tu diseño</h2>
-        <div id="cap-model-option" hidden>
-          <label for="cap-model">Modelo DKPS</label>
-          <select id="cap-model"></select>
-          <p class="file-help">Impresión solo en el frente.</p>
+        <div id="product-model-option" hidden>
+          <label for="product-model" id="product-model-label">Modelo</label>
+          <select id="product-model"></select>
+          <p class="file-help">Personalización solo en el frente.</p>
         </div>
         <fieldset id="garment-colors" hidden>
           <legend><span id="garment-color-label">Color de playera</span> <span class="garment-model" id="garment-model">JHK TSRA150</span></legend>
           <div id="garment-swatches" class="garment-swatches"></div>
           <p class="file-help garment-color-help">Color seleccionado <strong id="garment-color-value">BK</strong>. Los tonos en pantalla son aproximados.</p>
         </fieldset>
+        <div id="technique-option" hidden>
+          <label for="design-technique">Técnica de personalización</label>
+          <select id="design-technique" aria-describedby="technique-help"></select>
+          <p class="file-help" id="technique-help">Para el grabado láser, usa un PNG con fondo transparente. La vista simula el acabado; el contraste final depende del termo.</p>
+        </div>
         <label for="design-file" id="upload-label">Sube tu logo o diseño</label>
         <input type="file" id="design-file" accept="image/png,image/jpeg,image/webp" aria-describedby="file-help">
         <p class="file-help" id="file-help">PNG, JPG o WebP, hasta 10 MB. Tu archivo se procesa en tu navegador.</p>
@@ -97,6 +102,6 @@
       </section>
     </div>
   </main>
-  <script type="module" src="mockup.js?v=19"></script>
+  <script type="module" src="mockup.js?v=20"></script>
 </body>
 </html>

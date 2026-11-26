@@ -1,4 +1,4 @@
-import { capColorNames, capModels, checkoutProducts, extraPrintPrice, poloColors, unitPrice } from './pricing.js?v=9';
+import { capColorNames, capModels, checkoutProducts, extraPrintPrice, poloColors, tumblerColorNames, tumblerModels, tumblerTechniques, unitPrice } from './pricing.js?v=10';
 
 // Approximate screen colors sampled from the JHK TSRA150 reference.
 const tsra150Colors = {
@@ -22,7 +22,7 @@ const products = new Map([
     pricing: checkoutProducts.get('playeras-deportivas'),
     front: [31, 24, 38, 45], back: [30, 20, 40, 48], sizes: 'S–2XL',
   }],
-  ['termos', { name: 'Termo', quote: 'Termos', front: [42, 35, 16, 33] }],
+  ['termos', { name: 'Termos Kansas y Nevada', quote: 'Termos', pricing: checkoutProducts.get('termos'), front: tumblerModels.kansas.area, baseColor: 'OR', defaultModel: 'kansas' }],
   ['playeras-polo', { name: checkoutProducts.get('playeras-polo').name, quote: 'Playeras polo', pricing: checkoutProducts.get('playeras-polo'), front: [58, 27.4, 11.1, 13.7], back: [34.7, 19.2, 31, 31.4], baseColor: 'NY', initialColor: checkoutProducts.get('playeras-polo').defaultColor, sizes: 'S–2XL', colors: poloColors }],
   ['gorras', { name: 'Gorras de red DKPS', quote: 'Gorras', pricing: checkoutProducts.get('gorras'), front: [24.6, 25.4, 51.2, 30.6], baseColor: 'RB', defaultModel: '600' }],
   ['sudaderas-sin-capucha', { name: 'Sudadera sin capucha', quote: 'Sudaderas sin capucha', pricing: checkoutProducts.get('sudaderas-sin-capucha'), front: [33, 23.3, 35, 38.8], back: [32.3, 22.8, 33.8, 39.8], baseColor: 'KG', initialColor: 'WH', sizes: 'S–2XL', colors: sweatshirtColors }],
@@ -67,21 +67,25 @@ function initializeEditor(product) {
   const baseColor = product.baseColor || 'BK';
   let color = product.initialColor || baseColor;
   let model = product.defaultModel;
-  let colors = model ? capModels[model].colors : product.colors;
+  const isTumbler = slug === 'termos';
+  const variants = isTumbler ? tumblerModels : capModels;
+  const modelColorNames = isTumbler ? tumblerColorNames : capColorNames;
+  let colors = model ? variants[model].colors : product.colors;
+  let technique = 'full-color';
   const printSides = document.querySelector('#print-sides');
   let preferredSides;
   let refreshPrice = () => {};
   const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', currencyDisplay: 'code' });
 
   function updateColorLabel() {
-    colorValue.textContent = model ? capColorNames[color] : color;
+    colorValue.textContent = model ? modelColorNames[color] : color;
   }
 
   function renderColorOptions() {
     colorPicker.hidden = false;
     colorChoices.replaceChildren();
     updateColorLabel();
-    document.querySelector('#garment-model').textContent = model ? `DKPS ${model}` : product.sizes || 'JHK TSRA150';
+    document.querySelector('#garment-model').textContent = model ? (isTumbler ? '600 ml' : `DKPS ${model}`) : product.sizes || 'JHK TSRA150';
     for (const [code, paint] of Object.entries(colors)) {
       const option = document.createElement('label');
       const input = document.createElement('input');
@@ -90,7 +94,7 @@ function initializeEditor(product) {
       input.name = 'garment-color';
       input.value = code;
       input.checked = code === color;
-      if (model) input.setAttribute('aria-label', capColorNames[code]);
+      if (model) input.setAttribute('aria-label', modelColorNames[code]);
       swatch.textContent = code;
       if (Array.isArray(paint)) {
         const [body, trim] = paint;
@@ -112,6 +116,7 @@ function initializeEditor(product) {
     colorChoices.addEventListener('change', (event) => {
       color = event.target.value;
       updateColorLabel();
+      if (isTumbler) render();
       if (!download.disabled) {
         paintGarment();
       }
@@ -126,22 +131,45 @@ function initializeEditor(product) {
   const quoteLink = document.querySelector('#mockup-quote');
   quoteLink.href = quoteUrl.href;
   if (model) {
-    const modelSelect = document.querySelector('#cap-model');
-    document.querySelector('#cap-model-option').hidden = false;
-    document.querySelector('#garment-color-label').textContent = 'Color de gorra';
-    for (const [code, variant] of Object.entries(capModels)) {
+    const modelSelect = document.querySelector('#product-model');
+    document.querySelector('#product-model-option').hidden = false;
+    document.querySelector('#garment-color-label').textContent = isTumbler ? 'Color del termo' : 'Color de gorra';
+    document.querySelector('#product-model-label').textContent = isTumbler ? 'Modelo de termo' : 'Modelo DKPS';
+    for (const [code, variant] of Object.entries(variants)) {
       modelSelect.add(new Option(variant.name, code));
     }
     quoteUrl.searchParams.set('modelo', model);
     quoteLink.href = quoteUrl.href;
     modelSelect.addEventListener('change', () => {
       model = modelSelect.value;
-      colors = capModels[model].colors;
-      if (!Object.hasOwn(colors, color)) color = baseColor;
+      const variant = variants[model];
+      colors = variant.colors;
+      if (isTumbler) {
+        color = variant.initialColor;
+        views.frente.area = variant.area;
+      } else if (!Object.hasOwn(colors, color)) {
+        color = baseColor;
+      }
       renderColorOptions();
       quoteUrl.searchParams.set('modelo', model);
       quoteLink.href = quoteUrl.href;
       showSide();
+      refreshPrice();
+    });
+  }
+  if (isTumbler) {
+    const selector = document.querySelector('#design-technique');
+    document.querySelector('#technique-option').hidden = false;
+    for (const [value, label] of tumblerTechniques) {
+      selector.add(new Option(label, value));
+    }
+    quoteUrl.searchParams.set('tecnica', technique);
+    quoteLink.href = quoteUrl.href;
+    selector.addEventListener('change', () => {
+      technique = selector.value;
+      quoteUrl.searchParams.set('tecnica', technique);
+      quoteLink.href = quoteUrl.href;
+      render();
     });
   }
   if (product.back) {
@@ -168,7 +196,7 @@ function initializeEditor(product) {
   }
 
   if (product.pricing) {
-    const { minimum, unit, shipping } = product.pricing;
+    const { minimum, shipping } = product.pricing;
     const quantity = document.querySelector('#order-quantity');
     const subtotal = document.querySelector('#order-subtotal');
     const total = document.querySelector('#order-total');
@@ -213,7 +241,7 @@ function initializeEditor(product) {
           const response = await fetch('api/checkout/orders', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ provider: button.dataset.payment, product: slug, quantity: quantity.valueAsNumber, color, model, printSides: printSides.value }),
+            body: JSON.stringify({ provider: button.dataset.payment, product: slug, quantity: quantity.valueAsNumber, color, model, technique: isTumbler ? technique : undefined, printSides: printSides.value }),
           });
           const result = await response.json();
           if (!response.ok) throw new Error(result.error);
@@ -227,13 +255,15 @@ function initializeEditor(product) {
     }
     quantity.value = minimum;
     document.querySelector('#order-minimum').textContent = `Pedido mínimo: ${minimum} piezas.`;
-    document.querySelector('#order-unit').textContent = currency.format(unit);
+    const unit = document.querySelector('#order-unit');
     document.querySelector('#order-shipping').textContent = currency.format(shipping);
     document.querySelector('#mockup-order').hidden = false;
 
     function updatePrice() {
       const count = quantity.valueAsNumber;
-      const price = unitPrice(product.pricing, printSides.value);
+      const pricing = isTumbler ? variants[model] : product.pricing;
+      const price = unitPrice(pricing, printSides.value);
+      unit.textContent = currency.format(pricing.unit);
       const valid = quantity.validity.valid && Number.isSafeInteger(count * price + shipping);
       extraLabel.hidden = extra.hidden = printSides.value !== 'ambos';
       subtotal.textContent = valid ? currency.format(count * price) : '—';
@@ -275,7 +305,9 @@ function initializeEditor(product) {
     });
     download.disabled = true;
     garmentPreview.hidden = true;
-    template.alt = `${product.name}${model ? ` ${model}` : ''}, vista de ${side}`;
+    template.alt = isTumbler
+      ? `Termo ${variants[model].name} de 600 ml`
+      : `${product.name}${model ? ` ${model}` : ''}, vista de ${side}`;
     template.src = `assets/mockups/${slug}${model ? `-${model}` : ''}-${side}.webp`;
     uploadLabel.textContent = product.back ? `Diseño del ${side}` : 'Sube tu logo o diseño';
     fileInput.value = '';
@@ -321,9 +353,34 @@ function initializeEditor(product) {
       width: `${box.width / areaWidth * 100}%`,
       height: `${box.height / areaHeight * 100}%`,
     });
-    if (artwork.firstElementChild !== view.image) {
-      artwork.replaceChildren(view.image);
+    const preview = designPreview(view);
+    if (artwork.firstElementChild !== preview) {
+      artwork.replaceChildren(preview);
     }
+  }
+
+  function designPreview(view) {
+    if (!isTumbler || technique !== 'laser') return view.image;
+    const dark = color === 'ST';
+    if (view.engraving?.source === view.image && view.engraving.dark === dark) {
+      return view.engraving.canvas;
+    }
+
+    const canvas = document.createElement('canvas');
+    const scale = 600 / Math.max(view.image.naturalWidth, view.image.naturalHeight);
+    canvas.width = Math.max(1, Math.round(view.image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(view.image.naturalHeight * scale));
+    const context = canvas.getContext('2d');
+    context.drawImage(view.image, 0, 0, canvas.width, canvas.height);
+    context.globalCompositeOperation = 'source-in';
+    const metal = context.createLinearGradient(0, 0, canvas.width, 0);
+    metal.addColorStop(0, dark ? '#3b4143' : '#92999f');
+    metal.addColorStop(.48, dark ? '#51595b' : '#e8ecec');
+    metal.addColorStop(1, dark ? '#333a3c' : '#90989f');
+    context.fillStyle = metal;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    view.engraving = { source: view.image, dark, canvas };
+    return canvas;
   }
 
   artwork.addEventListener('pointerdown', (event) => {
@@ -423,6 +480,7 @@ function initializeEditor(product) {
           URL.revokeObjectURL(view.image.src);
         }
         view.image = image;
+        view.engraving = null;
         view.message = `Diseño cargado: ${file.name}`;
       }
     } catch {
@@ -444,6 +502,7 @@ function initializeEditor(product) {
     view.upload++;
     URL.revokeObjectURL(view.image.src);
     view.image = null;
+    view.engraving = null;
     view.message = 'Diseño eliminado.';
     render();
     fileInput.focus();
@@ -465,6 +524,7 @@ function initializeEditor(product) {
     const whiteTemplate = baseColor === 'WH';
     const yellowTemplate = baseColor === 'SY';
     const greenTemplate = baseColor === 'KG';
+    const bareSteel = isTumbler && color === 'ST';
     const yellowCenter = side === 'frente' ? 184 : 162;
     // Separate the fabric from the studio backdrop using brightness or color.
     for (let i = 0; i < pixels.data.length; i += 4) {
@@ -472,15 +532,21 @@ function initializeEditor(product) {
       let mask = (162 - shade) / 130;
       if (whiteTemplate) mask = (pixels.data[i + 2] - pixels.data[i] + 5) / 5;
       if (greenTemplate) mask = (150 - shade) / 80;
-      if (model) mask = (pixels.data[i + 2] - pixels.data[i] - 14) / 56;
+      if (isTumbler) mask = (pixels.data[i] - pixels.data[i + 2] - 20) / 70;
+      else if (model) mask = (pixels.data[i + 2] - pixels.data[i] - 14) / 56;
       if (yellowTemplate) mask = (pixels.data[i] - pixels.data[i + 2] - 12) / 72;
       const opacity = Math.max(0, Math.min(1, mask));
+      const metalHighlight = bareSteel ? 39 * Math.cos((i / 4 % width - width * .46) * .048) : 0;
       for (let channel = 0; channel < 3; channel++) {
         const original = pixels.data[i + channel];
         let tinted = original + rgb[channel] - 24;
         if (whiteTemplate) tinted = rgb[channel] + (original - 230) * .65;
         if (greenTemplate) tinted = rgb[channel] + (shade - 60) * .75;
-        if (model) tinted = rgb[channel] + (shade - 67) * .85;
+        if (isTumbler) {
+          tinted = rgb[channel] + (shade - 155) * .75 + metalHighlight;
+        } else if (model) {
+          tinted = rgb[channel] + (shade - 67) * .85;
+        }
         if (yellowTemplate) tinted = rgb[channel] + (shade - yellowCenter) * .75;
         pixels.data[i + channel] = original + (tinted - original) * opacity;
       }
@@ -517,9 +583,9 @@ function initializeEditor(product) {
     const [left, top] = view.area;
     const box = artworkBox(view);
     context.drawImage(garmentPreview.hidden ? template : garmentPreview, 0, 0, 600, 600);
-    context.drawImage(view.image, (left + box.x) * 6, (top + box.y) * 6, box.width * 6, box.height * 6);
+    context.drawImage(designPreview(view), (left + box.x) * 6, (top + box.y) * 6, box.width * 6, box.height * 6);
     const colorSuffix = colors ? `-${color.toLowerCase().replace('/', '-')}` : '';
-    const filename = `myckprints-${slug}${model ? `-${model}` : ''}${colorSuffix}-${side}.png`;
+    const filename = `myckprints-${slug}${model ? `-${model}` : ''}${colorSuffix}${isTumbler ? `-${technique}` : ''}-${side}.png`;
 
     canvas.toBlob((blob) => {
       if (!blob) {

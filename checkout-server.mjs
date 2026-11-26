@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { capModels, checkoutProducts, poloColors, printLabels, unitPrice } from './pricing.js';
+import { capModels, checkoutProducts, poloColors, printLabels, tumblerModels, tumblerTechniques, unitPrice } from './pricing.js';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT || 3000);
@@ -64,6 +64,7 @@ function approvalUrl(value, hosts) {
 
 async function createPayment(order, pricing) {
   const itemName = order.model ? `${pricing.name} ${order.model}` : pricing.name;
+  const finish = order.technique ? tumblerTechniques.get(order.technique) : printLabels.get(order.printSides);
   if (order.provider === 'mercadopago') {
     const data = await providerRequest(`${mpApi}/checkout/preferences`, {
       method: 'POST',
@@ -71,7 +72,7 @@ async function createPayment(order, pricing) {
       body: JSON.stringify({
         external_reference: order.id,
         items: [
-          { id: order.product, title: `${itemName} · ${printLabels.get(order.printSides)}`, quantity: order.quantity, unit_price: unitPrice(pricing, order.printSides), currency_id: 'MXN' },
+          { id: order.product, title: `${itemName} · ${finish}`, quantity: order.quantity, unit_price: unitPrice(pricing, order.printSides), currency_id: 'MXN' },
           { id: 'envio', title: 'Envío', quantity: 1, unit_price: pricing.shipping, currency_id: 'MXN' },
         ],
         back_urls: { success: returnUrl(order), pending: returnUrl(order), failure: returnUrl(order) },
@@ -88,7 +89,7 @@ async function createPayment(order, pricing) {
       intent: 'CAPTURE',
       purchase_units: [{
         reference_id: order.id,
-        description: `${order.quantity} × ${itemName} · ${printLabels.get(order.printSides)} · Envío incluido`,
+        description: `${order.quantity} × ${itemName} · ${finish} · Envío incluido`,
         amount: { currency_code: 'MXN', value: order.total.toFixed(2) },
       }],
       payment_source: { paypal: { experience_context: {
@@ -213,7 +214,7 @@ async function handle(request, response) {
     return json(response, 200, { mercadopago: mpReady, paypal: paypalReady });
   }
   if (pathname === '/api/checkout/orders' && request.method === 'POST') {
-    const { provider, product, quantity, color, model, printSides = 'frente' } = (await readJson(request)) || {};
+    const { provider, product, quantity, color, model, technique, printSides = 'frente' } = (await readJson(request)) || {};
     const pricing = checkoutProducts.get(product);
     if (!pricing) throw new CheckoutError(400, 'Este producto aún no está disponible para pagos de prueba.');
     if (!Number.isInteger(quantity) || quantity < pricing.minimum || quantity > 10000) {
@@ -223,24 +224,31 @@ async function handle(request, response) {
     if (product === 'gorras' && (!capModel || printSides !== 'frente')) {
       throw new CheckoutError(400, 'Selecciona el modelo DKPS 600 o 601 con impresión frontal.');
     }
+    const tumbler = product === 'termos' && typeof model === 'string' && Object.hasOwn(tumblerModels, model) ? tumblerModels[model] : null;
+    if (product === 'termos' && (!tumbler || !tumblerTechniques.has(technique) || printSides !== 'frente')) {
+      throw new CheckoutError(400, 'Selecciona un modelo de termo y una técnica de personalización frontal.');
+    }
     if (!printLabels.has(printSides)) throw new CheckoutError(400, 'Selecciona los lados a imprimir.');
     if (!['mercadopago', 'paypal'].includes(provider)) throw new CheckoutError(400, 'Selecciona un método de pago.');
-    const colorOptions = capModel?.colors ?? pricing.colors ?? (product === 'playeras-polo' ? poloColors : null);
+    const colorOptions = capModel?.colors ?? tumbler?.colors ?? pricing.colors ?? (product === 'playeras-polo' ? poloColors : null);
     const validColor = typeof color === 'string' &&
       (colorOptions ? Object.hasOwn(colorOptions, color) : /^[A-Z]{2,3}$/.test(color));
+    if (tumbler && !validColor) throw new CheckoutError(400, 'Selecciona un color disponible para el termo.');
     if (capModel && !validColor) throw new CheckoutError(400, 'Selecciona un color disponible para el modelo de gorra.');
     if (colorOptions && color != null && !validColor) {
       throw new CheckoutError(400, 'Selecciona un color disponible para el producto.');
     }
     if (!(provider === 'paypal' ? paypalReady : mpReady)) throw new CheckoutError(503, 'Este método aún no tiene configuración de prueba.');
+    const orderPricing = tumbler ? { ...pricing, unit: tumbler.unit } : pricing;
     const order = {
       id: randomUUID(), provider, product, quantity, printSides,
       ...(capModel && { model }),
+      ...(tumbler && { model: tumbler.name, technique }),
       color: validColor ? color : (pricing.defaultColor ?? (product === 'playeras' ? 'BK' : 'WH')),
-      total: quantity * unitPrice(pricing, printSides) + pricing.shipping,
+      total: quantity * unitPrice(orderPricing, printSides) + pricing.shipping,
       status: 'pendiente', createdAt: new Date().toISOString(),
     };
-    const payment = await createPayment(order, pricing);
+    const payment = await createPayment(order, orderPricing);
     await saveOrder({ ...order, providerId: payment.providerId });
     return json(response, 201, { url: payment.url });
   }

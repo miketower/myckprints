@@ -40,7 +40,7 @@
 .print-area{position:absolute;pointer-events:none}
 .mockup-stage[data-empty=true] .print-area{outline:1px dashed #b20059;background:#f0007912}
 #artwork{position:absolute}
-#artwork img{
+#artwork img,#artwork canvas{
   height:100%;
   object-fit:fill;
   pointer-events:auto;
@@ -48,7 +48,7 @@
   touch-action:none;
   user-select:none;
 }
-#artwork img:active{cursor:grabbing}
+#artwork img:active,#artwork canvas:active{cursor:grabbing}
 .mockup-stage[data-empty=false]:has(#artwork:hover) .print-area{
   outline:1px dashed #b20059;
 }
@@ -108,3 +108,5 @@
 .checkout-actions{margin:14px 0 8px}
 .checkout-actions button:disabled{opacity:.55;cursor:default}
 .garment-swatches .garment-combination{width:54px;border-radius:18px;font-size:10px}
+
+#artwork canvas{display:block;width:100%}
