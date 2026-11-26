@@ -6,7 +6,7 @@
   <meta name="description" content="Prueba tu logo o diseño en productos personalizados de Myckprints.">
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="stylesheet" href="styles.css?v=3">
-  <link rel="stylesheet" href="mockup.css?v=5">
+  <link rel="stylesheet" href="mockup.css?v=6">
   <title>Editor de mockups — Myckprints</title>
 </head>
 <body>
@@ -71,12 +71,17 @@
             <dt>Envío fijo</dt><dd id="order-shipping"></dd>
             <dt><strong>Total</strong></dt><dd><output id="order-total" for="order-quantity"></output></dd>
           </dl>
+          <div class="checkout-actions actions" aria-label="Métodos de pago de prueba">
+            <button class="button dark" type="button" data-payment="mercadopago" disabled>Mercado Pago</button>
+            <button class="button outline" type="button" data-payment="paypal" disabled>PayPal Checkout</button>
+          </div>
+          <p class="file-help" id="checkout-status" role="status">Modo de prueba. No se realizan cobros reales.</p>
           <p class="file-help order-help"><strong>Pregunta por mayoreo.</strong> Los precios mejoran por volumen. <a href="https://wa.me/528110601127?text=Hola%2C%20quiero%20preguntar%20por%20precios%20de%20mayoreo%20para%20playeras." target="_blank" rel="noopener">Consulta por WhatsApp ↗</a></p>
         </section>
         <a class="button dark" id="mockup-quote" href="./#cotizar">Cotizar este producto ↗</a>
       </section>
     </div>
   </main>
-  <script src="mockup.js?v=5" defer></script>
+  <script type="module" src="mockup.js?v=6"></script>
 </body>
 </html>

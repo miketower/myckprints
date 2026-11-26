@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="stylesheet" href="styles.css?v=3">
+  <link rel="stylesheet" href="mockup.css?v=6">
+  <title>Pago de prueba — Myckprints</title>
+</head>
+<body>
+  <div class="notice">Pago de prueba</div>
+  <header class="wrap header">
+    <a class="brand" href="./" aria-label="Myckprints, inicio"><img src="assets/logo-horizontal.png" width="878" height="262" alt=""></a>
+    <a class="button outline small" href="./#productos">Volver al catálogo</a>
+  </header>
+  <main class="wrap mockup">
+    <h1>Estado del pago</h1>
+    <p id="checkout-result" role="status">Consultando el pago de prueba…</p>
+    <p id="checkout-reference" hidden></p>
+    <div class="actions">
+      <button type="button" class="button outline" id="checkout-refresh">Volver a consultar</button>
+      <a class="button dark" id="checkout-design" href="https://wa.me/528110601127" target="_blank" rel="noopener" hidden>Compartir mi diseño por WhatsApp ↗</a>
+    </div>
+    <noscript>Activa JavaScript para consultar el estado del pago.</noscript>
+  </main>
+  <script src="checkout.js" defer></script>
+</body>
+</html>

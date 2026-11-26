@@ -105,3 +105,5 @@
 #order-total{font-weight:900}
 .order-help{margin:8px 0 0}
 .order-help a{text-decoration:underline}
+.checkout-actions{margin:14px 0 8px}
+.checkout-actions button:disabled{opacity:.55;cursor:default}

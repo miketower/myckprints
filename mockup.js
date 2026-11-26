@@ -1,3 +1,5 @@
+import { shirtPricing } from "./pricing.mjs";
+
 // Approximate screen colors sampled from the JHK TSRA150 reference.
 const tsra150Colors = {
   BT: '#f6dba5', WH: '#ffffff', GM: '#787c76', GF: '#494c4d', BK: '#1c1c1a',
@@ -8,7 +10,7 @@ const tsra150Colors = {
 };
 
 const products = new Map([
-  ['playeras', { name: 'Playera de manga corta', quote: 'Playeras', pricing: { minimum: 10, unit: 180, shipping: 150 }, front: [31, 25, 38.5, 45], back: [29, 19.3, 42, 50], colors: tsra150Colors }],
+  ['playeras', { name: 'Playera de manga corta', quote: 'Playeras', pricing: shirtPricing, front: [31, 25, 38.5, 45], back: [29, 19.3, 42, 50], colors: tsra150Colors }],
   ['sudaderas', { name: 'Sudadera con capucha', quote: 'Sudaderas con capucha', front: [36, 39, 28, 20] }],
   ['camisas', { name: 'Camisa', quote: 'Camisas', front: [54, 36, 12, 15] }],
   ['termos', { name: 'Termo', quote: 'Termos', front: [42, 35, 16, 33] }],
@@ -94,6 +96,55 @@ function initializeEditor(product) {
     const total = document.querySelector('#order-total');
     const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', currencyDisplay: 'code' });
     quantity.min = minimum;
+    quantity.max = 10000;
+    const checkoutStatus = document.querySelector('#checkout-status');
+    const paymentButtons = document.querySelectorAll('[data-payment]');
+    let providers = {};
+    let processing = false;
+
+    function updatePaymentButtons() {
+      for (const button of paymentButtons) {
+        button.disabled = processing || !quantity.validity.valid || !providers[button.dataset.payment];
+      }
+    }
+
+    async function loadProviders() {
+      try {
+        const response = await fetch('api/checkout/config', { cache: 'no-store' });
+        if (!response.ok) throw new Error();
+        providers = await response.json();
+        const missing = Array.from(paymentButtons).filter((button) => !providers[button.dataset.payment]);
+        if (missing.length) {
+          checkoutStatus.textContent = `Modo de prueba. Configuración pendiente: ${missing.map((button) => button.textContent).join(', ')}.`;
+        }
+        updatePaymentButtons();
+      } catch {
+        checkoutStatus.textContent = 'Inicia el servidor de Myckprints para habilitar los pagos de prueba.';
+      }
+    }
+
+    for (const button of paymentButtons) {
+      button.addEventListener('click', async () => {
+        if (processing || !quantity.reportValidity()) return;
+        processing = true;
+        updatePaymentButtons();
+        checkoutStatus.textContent = 'Abriendo el pago de prueba…';
+        try {
+          const response = await fetch('api/checkout/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider: button.dataset.payment, product: slug, quantity: quantity.valueAsNumber, color }),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error);
+          window.location.assign(result.url);
+        } catch (error) {
+          checkoutStatus.textContent = error.message || 'No se pudo abrir el pago de prueba.';
+          processing = false;
+          updatePaymentButtons();
+        }
+      });
+    }
     quantity.value = minimum;
     document.querySelector('#order-minimum').textContent = `Pedido mínimo: ${minimum} piezas.`;
     document.querySelector('#order-unit').textContent = currency.format(unit);
@@ -111,10 +162,19 @@ function initializeEditor(product) {
         quoteUrl.searchParams.delete('cantidad');
       }
       quoteLink.href = quoteUrl.href;
+      updatePaymentButtons();
     }
 
     quantity.addEventListener('input', updatePrice);
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) {
+        processing = false;
+        checkoutStatus.textContent = 'Modo de prueba. No se realizan cobros reales.';
+        loadProviders();
+      }
+    });
     updatePrice();
+    loadProviders();
   }
   viewSwitch.hidden = !product.back;
   editor.hidden = false;
