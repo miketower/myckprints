@@ -1,4 +1,4 @@
-import { checkoutProducts, printLabels } from './pricing.js?v=4';
+import { checkoutProducts, printLabels } from './pricing.js?v=7';
 
 const form = document.querySelector('#quote-form');
 const product = document.querySelector('#product');
@@ -44,7 +44,7 @@ form.addEventListener('submit', (event) => {
   const printSides = product.value === requestedProduct && printLabels.get(quoteParams.get('impresion'));
   message.value = [
     '¡Hola, Myckprints! Me gustaría cotizar un pedido personalizado.',
-    `Producto: ${product.value}`,
+    `Producto: ${product.selectedOptions[0].textContent}`,
     `Cantidad: ${quantity.value} piezas`,
     printSides && `Impresión: ${printSides}`,
     description && `Detalles: ${description}`,

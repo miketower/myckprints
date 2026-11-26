@@ -1,4 +1,4 @@
-import { checkoutProducts, extraPrintPrice, unitPrice } from './pricing.js?v=4';
+import { checkoutProducts, extraPrintPrice, poloColors, unitPrice } from './pricing.js?v=7';
 
 // Approximate screen colors sampled from the JHK TSRA150 reference.
 const tsra150Colors = {
@@ -19,7 +19,7 @@ const products = new Map([
   ['sudaderas', { name: 'Sudadera con capucha', quote: 'Sudaderas con capucha', pricing: checkoutProducts.get('sudaderas'), front: [36.7, 31.5, 27.6, 23.6], back: [28.8, 34.6, 40.6, 37.3], baseColor: 'SY', initialColor: 'WH', sizes: 'S–2XL', colors: sweatshirtColors }],
   ['camisas', { name: 'Camisa', quote: 'Camisas', front: [54, 36, 12, 15] }],
   ['termos', { name: 'Termo', quote: 'Termos', front: [42, 35, 16, 33] }],
-  ['playeras-polo', { name: 'Playera polo', quote: 'Playeras polo', front: [54, 34, 13, 16], back: [36, 29, 28, 34] }],
+  ['playeras-polo', { name: checkoutProducts.get('playeras-polo').name, quote: 'Playeras polo', pricing: checkoutProducts.get('playeras-polo'), front: [58, 27.4, 11.1, 13.7], back: [34.7, 19.2, 31, 31.4], baseColor: 'NY', initialColor: checkoutProducts.get('playeras-polo').defaultColor, sizes: 'S–2XL', colors: poloColors }],
   ['gorras', { name: 'Gorra', quote: 'Gorras', front: [35, 35, 30, 21] }],
   ['sudaderas-sin-capucha', { name: 'Sudadera sin capucha', quote: 'Sudaderas sin capucha', pricing: checkoutProducts.get('sudaderas-sin-capucha'), front: [33, 23.3, 35, 38.8], back: [32.3, 22.8, 33.8, 39.8], baseColor: 'KG', initialColor: 'WH', sizes: 'S–2XL', colors: sweatshirtColors }],
   ['playeras-manga-larga', { name: 'Playera de manga larga', quote: 'Playeras de manga larga', pricing: checkoutProducts.get('playeras-manga-larga'), front: [31, 23, 38, 48], back: [29, 18, 41, 49], baseColor: 'WH', sizes: 'S–2XL', colors: { WH: tsra150Colors.WH, BK: tsra150Colors.BK, GM: tsra150Colors.GM, RD: tsra150Colors.RD, NY: tsra150Colors.NY } }],
@@ -71,7 +71,7 @@ function initializeEditor(product) {
     colorPicker.hidden = false;
     colorValue.textContent = color;
     document.querySelector('#garment-model').textContent = product.sizes || 'JHK TSRA150';
-    for (const [code, hex] of Object.entries(product.colors)) {
+    for (const [code, paint] of Object.entries(product.colors)) {
       const option = document.createElement('label');
       const input = document.createElement('input');
       const swatch = document.createElement('span');
@@ -80,7 +80,13 @@ function initializeEditor(product) {
       input.value = code;
       input.checked = code === color;
       swatch.textContent = code;
-      swatch.style.setProperty('--swatch', hex);
+      if (Array.isArray(paint)) {
+        const [body, trim] = paint;
+        swatch.classList.add('garment-combination');
+        swatch.style.setProperty('--swatch', `linear-gradient(to bottom, ${body} 76%, ${trim} 76%)`);
+      } else {
+        swatch.style.setProperty('--swatch', paint);
+      }
       option.append(input, swatch);
       colorChoices.append(option);
     }
@@ -415,7 +421,9 @@ function initializeEditor(product) {
     const { width, height } = garmentPreview;
     context.drawImage(template, 0, 0, width, height);
     const pixels = context.getImageData(0, 0, width, height);
-    const rgb = product.colors[color].slice(1).match(/../g).map((channel) => parseInt(channel, 16));
+    const paint = product.colors[color];
+    const [body, trim] = Array.isArray(paint) ? paint : [paint];
+    const rgb = body.slice(1).match(/../g).map((channel) => parseInt(channel, 16));
 
     const whiteTemplate = baseColor === 'WH';
     const yellowTemplate = baseColor === 'SY';
@@ -439,6 +447,15 @@ function initializeEditor(product) {
       }
     }
     context.putImageData(pixels, 0, 0);
+    if (trim && side === 'frente') {
+      context.strokeStyle = trim;
+      context.lineWidth = width * .007;
+      context.lineCap = 'round';
+      context.beginPath();
+      context.moveTo(width * .432, height * .091);
+      context.quadraticCurveTo(width * .5, height * .107, width * .568, height * .091);
+      context.stroke();
+    }
   }
 
   template.addEventListener('load', () => {
@@ -462,7 +479,7 @@ function initializeEditor(product) {
     const box = artworkBox(view);
     context.drawImage(garmentPreview.hidden ? template : garmentPreview, 0, 0, 600, 600);
     context.drawImage(view.image, (left + box.x) * 6, (top + box.y) * 6, box.width * 6, box.height * 6);
-    const colorSuffix = product.colors ? `-${color.toLowerCase()}` : '';
+    const colorSuffix = product.colors ? `-${color.toLowerCase().replace('/', '-')}` : '';
     const filename = `myckprints-${slug}${colorSuffix}-${side}.png`;
 
     canvas.toBlob((blob) => {

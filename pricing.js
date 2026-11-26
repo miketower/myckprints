@@ -9,9 +9,24 @@ export function unitPrice(pricing, printSides) {
   return pricing.unit + (printSides === 'ambos' ? extraPrintPrice : 0);
 }
 
+// Approximate screen values for the polo body and inner collar trim.
+export const poloColors = Object.freeze({
+  'WH/WH': ['#ffffff', '#ffffff'],
+  'SL/GRA': ['#bebfba', '#36b8a5'],
+  'CHC/RD': ['#48464c', '#e51840'],
+  'NY/SL': ['#202636', '#c8cac8'],
+  'RB/SL': ['#074b9c', '#c8cac8'],
+  'BK/SL': ['#201e22', '#c8cac8'],
+  'RD/NY': ['#c90031', '#202636'],
+  'DN/NY': ['#284677', '#202636'],
+  'BU/BK': ['#640634', '#201e22'],
+  'DS/BK': ['#ac997b', '#201e22'],
+});
+
 export const checkoutProducts = new Map([
   ['sudaderas', Object.freeze({ name: 'Sudadera con capucha', quote: 'Sudaderas con capucha', minimum: 10, unit: 420, shipping: 150 })],
   ['sudaderas-sin-capucha', Object.freeze({ name: 'Sudadera sin capucha', quote: 'Sudaderas sin capucha', minimum: 10, unit: 390, shipping: 150 })],
   ['playeras', Object.freeze({ name: 'Playera de manga corta', quote: 'Playeras', minimum: 10, unit: 180, shipping: 150 })],
+  ['playeras-polo', Object.freeze({ name: 'Polo Dry Fit', quote: 'Playeras polo', minimum: 12, unit: 260, shipping: 150, defaultColor: 'NY/SL' })],
   ['playeras-manga-larga', Object.freeze({ name: 'Playera de manga larga', quote: 'Playeras de manga larga', minimum: 12, unit: 220, shipping: 150 })],
 ]);

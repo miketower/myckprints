@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkoutProducts, printLabels, unitPrice } from './pricing.js';
+import { checkoutProducts, poloColors, printLabels, unitPrice } from './pricing.js';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT || 3000);
@@ -220,10 +220,15 @@ async function handle(request, response) {
     }
     if (!printLabels.has(printSides)) throw new CheckoutError(400, 'Selecciona los lados a imprimir.');
     if (!['mercadopago', 'paypal'].includes(provider)) throw new CheckoutError(400, 'Selecciona un método de pago.');
+    const validColor = typeof color === 'string' &&
+      (product === 'playeras-polo' ? Object.hasOwn(poloColors, color) : /^[A-Z]{2,3}$/.test(color));
+    if (product === 'playeras-polo' && color != null && !validColor) {
+      throw new CheckoutError(400, 'Selecciona una combinación de color disponible para la polo.');
+    }
     if (!(provider === 'paypal' ? paypalReady : mpReady)) throw new CheckoutError(503, 'Este método aún no tiene configuración de prueba.');
     const order = {
       id: randomUUID(), provider, product, quantity, printSides,
-      color: typeof color === 'string' && /^[A-Z]{2,3}$/.test(color) ? color : (product === 'playeras' ? 'BK' : 'WH'),
+      color: validColor ? color : (pricing.defaultColor ?? (product === 'playeras' ? 'BK' : 'WH')),
       total: quantity * unitPrice(pricing, printSides) + pricing.shipping,
       status: 'pendiente', createdAt: new Date().toISOString(),
     };
