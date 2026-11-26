@@ -1,4 +1,4 @@
-import { checkoutProducts, extraPrintPrice, poloColors, unitPrice } from './pricing.js?v=7';
+import { capColorNames, capModels, checkoutProducts, extraPrintPrice, poloColors, unitPrice } from './pricing.js?v=8';
 
 // Approximate screen colors sampled from the JHK TSRA150 reference.
 const tsra150Colors = {
@@ -20,7 +20,7 @@ const products = new Map([
   ['camisas', { name: 'Camisa', quote: 'Camisas', front: [54, 36, 12, 15] }],
   ['termos', { name: 'Termo', quote: 'Termos', front: [42, 35, 16, 33] }],
   ['playeras-polo', { name: checkoutProducts.get('playeras-polo').name, quote: 'Playeras polo', pricing: checkoutProducts.get('playeras-polo'), front: [58, 27.4, 11.1, 13.7], back: [34.7, 19.2, 31, 31.4], baseColor: 'NY', initialColor: checkoutProducts.get('playeras-polo').defaultColor, sizes: 'S–2XL', colors: poloColors }],
-  ['gorras', { name: 'Gorra', quote: 'Gorras', front: [35, 35, 30, 21] }],
+  ['gorras', { name: 'Gorras de red DKPS', quote: 'Gorras', pricing: checkoutProducts.get('gorras'), front: [28, 34, 44, 21], baseColor: 'RB', defaultModel: '600' }],
   ['sudaderas-sin-capucha', { name: 'Sudadera sin capucha', quote: 'Sudaderas sin capucha', pricing: checkoutProducts.get('sudaderas-sin-capucha'), front: [33, 23.3, 35, 38.8], back: [32.3, 22.8, 33.8, 39.8], baseColor: 'KG', initialColor: 'WH', sizes: 'S–2XL', colors: sweatshirtColors }],
   ['playeras-manga-larga', { name: 'Playera de manga larga', quote: 'Playeras de manga larga', pricing: checkoutProducts.get('playeras-manga-larga'), front: [31, 23, 38, 48], back: [29, 18, 41, 49], baseColor: 'WH', sizes: 'S–2XL', colors: { WH: tsra150Colors.WH, BK: tsra150Colors.BK, GM: tsra150Colors.GM, RD: tsra150Colors.RD, NY: tsra150Colors.NY } }],
 ]);
@@ -62,16 +62,23 @@ function initializeEditor(product) {
   let drag;
   const baseColor = product.baseColor || 'BK';
   let color = product.initialColor || baseColor;
+  let model = product.defaultModel;
+  let colors = model ? capModels[model].colors : product.colors;
   const printSides = document.querySelector('#print-sides');
   let preferredSides;
   let refreshPrice = () => {};
   const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', currencyDisplay: 'code' });
 
-  if (product.colors) {
+  function updateColorLabel() {
+    colorValue.textContent = model ? capColorNames[color] : color;
+  }
+
+  function renderColorOptions() {
     colorPicker.hidden = false;
-    colorValue.textContent = color;
-    document.querySelector('#garment-model').textContent = product.sizes || 'JHK TSRA150';
-    for (const [code, paint] of Object.entries(product.colors)) {
+    colorChoices.replaceChildren();
+    updateColorLabel();
+    document.querySelector('#garment-model').textContent = model ? `DKPS ${model}` : product.sizes || 'JHK TSRA150';
+    for (const [code, paint] of Object.entries(colors)) {
       const option = document.createElement('label');
       const input = document.createElement('input');
       const swatch = document.createElement('span');
@@ -79,21 +86,28 @@ function initializeEditor(product) {
       input.name = 'garment-color';
       input.value = code;
       input.checked = code === color;
+      if (model) input.setAttribute('aria-label', capColorNames[code]);
       swatch.textContent = code;
       if (Array.isArray(paint)) {
         const [body, trim] = paint;
         swatch.classList.add('garment-combination');
         swatch.style.setProperty('--swatch', `linear-gradient(to bottom, ${body} 76%, ${trim} 76%)`);
       } else {
-        swatch.style.setProperty('--swatch', paint);
+        swatch.style.setProperty('--swatch', model === '601'
+          ? `linear-gradient(to bottom, #f5f3ed 55%, ${paint} 55%)`
+          : paint);
       }
       option.append(input, swatch);
       colorChoices.append(option);
     }
 
+  }
+
+  if (colors) {
+    renderColorOptions();
     colorChoices.addEventListener('change', (event) => {
       color = event.target.value;
-      colorValue.textContent = color;
+      updateColorLabel();
       if (!download.disabled) {
         paintGarment();
       }
@@ -107,6 +121,25 @@ function initializeEditor(product) {
   quoteUrl.hash = 'cotizar';
   const quoteLink = document.querySelector('#mockup-quote');
   quoteLink.href = quoteUrl.href;
+  if (model) {
+    const modelSelect = document.querySelector('#cap-model');
+    document.querySelector('#cap-model-option').hidden = false;
+    document.querySelector('#garment-color-label').textContent = 'Color de gorra';
+    for (const [code, variant] of Object.entries(capModels)) {
+      modelSelect.add(new Option(variant.name, code));
+    }
+    quoteUrl.searchParams.set('modelo', model);
+    quoteLink.href = quoteUrl.href;
+    modelSelect.addEventListener('change', () => {
+      model = modelSelect.value;
+      colors = capModels[model].colors;
+      if (!Object.hasOwn(colors, color)) color = baseColor;
+      renderColorOptions();
+      quoteUrl.searchParams.set('modelo', model);
+      quoteLink.href = quoteUrl.href;
+      showSide();
+    });
+  }
   if (product.back) {
     document.querySelector('#print-options').hidden = false;
     document.querySelector('#print-extra').textContent = `Imprimir frente y reverso agrega ${currency.format(extraPrintPrice)} por prenda.`;
@@ -176,7 +209,7 @@ function initializeEditor(product) {
           const response = await fetch('api/checkout/orders', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ provider: button.dataset.payment, product: slug, quantity: quantity.valueAsNumber, color, printSides: printSides.value }),
+            body: JSON.stringify({ provider: button.dataset.payment, product: slug, quantity: quantity.valueAsNumber, color, model, printSides: printSides.value }),
           });
           const result = await response.json();
           if (!response.ok) throw new Error(result.error);
@@ -238,8 +271,8 @@ function initializeEditor(product) {
     });
     download.disabled = true;
     garmentPreview.hidden = true;
-    template.alt = `${product.name}, vista de ${side}`;
-    template.src = `assets/mockups/${slug}-${side}.webp`;
+    template.alt = `${product.name}${model ? ` ${model}` : ''}, vista de ${side}`;
+    template.src = `assets/mockups/${slug}${model ? `-${model}` : ''}-${side}.webp`;
     uploadLabel.textContent = product.back ? `Diseño del ${side}` : 'Sube tu logo o diseño';
     fileInput.value = '';
     for (const button of viewButtons) {
@@ -413,7 +446,7 @@ function initializeEditor(product) {
   });
 
   function paintGarment() {
-    garmentPreview.hidden = !product.colors || color === baseColor;
+    garmentPreview.hidden = !colors || color === baseColor;
     if (garmentPreview.hidden) {
       return;
     }
@@ -421,7 +454,7 @@ function initializeEditor(product) {
     const { width, height } = garmentPreview;
     context.drawImage(template, 0, 0, width, height);
     const pixels = context.getImageData(0, 0, width, height);
-    const paint = product.colors[color];
+    const paint = colors[color];
     const [body, trim] = Array.isArray(paint) ? paint : [paint];
     const rgb = body.slice(1).match(/../g).map((channel) => parseInt(channel, 16));
 
@@ -435,6 +468,7 @@ function initializeEditor(product) {
       let mask = (162 - shade) / 130;
       if (whiteTemplate) mask = (pixels.data[i + 2] - pixels.data[i] + 5) / 5;
       if (greenTemplate) mask = (150 - shade) / 80;
+      if (model) mask = (pixels.data[i + 2] - pixels.data[i] - 14) / 56;
       if (yellowTemplate) mask = (pixels.data[i] - pixels.data[i + 2] - 12) / 72;
       const opacity = Math.max(0, Math.min(1, mask));
       for (let channel = 0; channel < 3; channel++) {
@@ -442,6 +476,7 @@ function initializeEditor(product) {
         let tinted = original + rgb[channel] - 24;
         if (whiteTemplate) tinted = rgb[channel] + (original - 230) * .65;
         if (greenTemplate) tinted = rgb[channel] + (shade - 60) * .75;
+        if (model) tinted = rgb[channel] + (shade - 67) * .85;
         if (yellowTemplate) tinted = rgb[channel] + (shade - yellowCenter) * .75;
         pixels.data[i + channel] = original + (tinted - original) * opacity;
       }
@@ -479,8 +514,8 @@ function initializeEditor(product) {
     const box = artworkBox(view);
     context.drawImage(garmentPreview.hidden ? template : garmentPreview, 0, 0, 600, 600);
     context.drawImage(view.image, (left + box.x) * 6, (top + box.y) * 6, box.width * 6, box.height * 6);
-    const colorSuffix = product.colors ? `-${color.toLowerCase().replace('/', '-')}` : '';
-    const filename = `myckprints-${slug}${colorSuffix}-${side}.png`;
+    const colorSuffix = colors ? `-${color.toLowerCase().replace('/', '-')}` : '';
+    const filename = `myckprints-${slug}${model ? `-${model}` : ''}${colorSuffix}-${side}.png`;
 
     canvas.toBlob((blob) => {
       if (!blob) {

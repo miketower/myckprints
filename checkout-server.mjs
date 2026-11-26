@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkoutProducts, poloColors, printLabels, unitPrice } from './pricing.js';
+import { capModels, checkoutProducts, poloColors, printLabels, unitPrice } from './pricing.js';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT || 3000);
@@ -63,6 +63,7 @@ function approvalUrl(value, hosts) {
 }
 
 async function createPayment(order, pricing) {
+  const itemName = order.model ? `${pricing.name} ${order.model}` : pricing.name;
   if (order.provider === 'mercadopago') {
     const data = await providerRequest(`${mpApi}/checkout/preferences`, {
       method: 'POST',
@@ -70,7 +71,7 @@ async function createPayment(order, pricing) {
       body: JSON.stringify({
         external_reference: order.id,
         items: [
-          { id: order.product, title: `${pricing.name} · ${printLabels.get(order.printSides)}`, quantity: order.quantity, unit_price: unitPrice(pricing, order.printSides), currency_id: 'MXN' },
+          { id: order.product, title: `${itemName} · ${printLabels.get(order.printSides)}`, quantity: order.quantity, unit_price: unitPrice(pricing, order.printSides), currency_id: 'MXN' },
           { id: 'envio', title: 'Envío', quantity: 1, unit_price: pricing.shipping, currency_id: 'MXN' },
         ],
         back_urls: { success: returnUrl(order), pending: returnUrl(order), failure: returnUrl(order) },
@@ -87,7 +88,7 @@ async function createPayment(order, pricing) {
       intent: 'CAPTURE',
       purchase_units: [{
         reference_id: order.id,
-        description: `${order.quantity} × ${pricing.name} · ${printLabels.get(order.printSides)} · Envío incluido`,
+        description: `${order.quantity} × ${itemName} · ${printLabels.get(order.printSides)} · Envío incluido`,
         amount: { currency_code: 'MXN', value: order.total.toFixed(2) },
       }],
       payment_source: { paypal: { experience_context: {
@@ -212,22 +213,28 @@ async function handle(request, response) {
     return json(response, 200, { mercadopago: mpReady, paypal: paypalReady });
   }
   if (pathname === '/api/checkout/orders' && request.method === 'POST') {
-    const { provider, product, quantity, color, printSides = 'frente' } = (await readJson(request)) || {};
+    const { provider, product, quantity, color, model, printSides = 'frente' } = (await readJson(request)) || {};
     const pricing = checkoutProducts.get(product);
     if (!pricing) throw new CheckoutError(400, 'Este producto aún no está disponible para pagos de prueba.');
     if (!Number.isInteger(quantity) || quantity < pricing.minimum || quantity > 10000) {
       throw new CheckoutError(400, `Selecciona entre ${pricing.minimum} y 10,000 piezas para esta prueba.`);
     }
+    const capModel = product === 'gorras' && typeof model === 'string' && Object.hasOwn(capModels, model) ? capModels[model] : null;
+    if (product === 'gorras' && (!capModel || printSides !== 'frente')) {
+      throw new CheckoutError(400, 'Selecciona el modelo DKPS 600 o 601 con impresión frontal.');
+    }
     if (!printLabels.has(printSides)) throw new CheckoutError(400, 'Selecciona los lados a imprimir.');
     if (!['mercadopago', 'paypal'].includes(provider)) throw new CheckoutError(400, 'Selecciona un método de pago.');
     const validColor = typeof color === 'string' &&
-      (product === 'playeras-polo' ? Object.hasOwn(poloColors, color) : /^[A-Z]{2,3}$/.test(color));
+      (capModel ? Object.hasOwn(capModel.colors, color) : product === 'playeras-polo' ? Object.hasOwn(poloColors, color) : /^[A-Z]{2,3}$/.test(color));
+    if (capModel && !validColor) throw new CheckoutError(400, 'Selecciona un color disponible para el modelo de gorra.');
     if (product === 'playeras-polo' && color != null && !validColor) {
       throw new CheckoutError(400, 'Selecciona una combinación de color disponible para la polo.');
     }
     if (!(provider === 'paypal' ? paypalReady : mpReady)) throw new CheckoutError(503, 'Este método aún no tiene configuración de prueba.');
     const order = {
       id: randomUUID(), provider, product, quantity, printSides,
+      ...(capModel && { model }),
       color: validColor ? color : (pricing.defaultColor ?? (product === 'playeras' ? 'BK' : 'WH')),
       total: quantity * unitPrice(pricing, printSides) + pricing.shipping,
       status: 'pendiente', createdAt: new Date().toISOString(),

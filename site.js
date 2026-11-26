@@ -1,4 +1,4 @@
-import { checkoutProducts, printLabels } from './pricing.js?v=7';
+import { capModels, checkoutProducts, printLabels } from './pricing.js?v=8';
 
 const form = document.querySelector('#quote-form');
 const product = document.querySelector('#product');
@@ -42,10 +42,12 @@ form.addEventListener('submit', (event) => {
   event.preventDefault();
   const description = details.value.trim();
   const printSides = product.value === requestedProduct && printLabels.get(quoteParams.get('impresion'));
+  const capModel = product.value === 'Gorras' && requestedProduct === 'Gorras' && quoteParams.get('modelo');
   message.value = [
     '¡Hola, Myckprints! Me gustaría cotizar un pedido personalizado.',
     `Producto: ${product.selectedOptions[0].textContent}`,
     `Cantidad: ${quantity.value} piezas`,
+    Object.hasOwn(capModels, capModel) && `Modelo DKPS: ${capModel}. Impresión frontal.`,
     printSides && `Impresión: ${printSides}`,
     description && `Detalles: ${description}`,
     '¿Me confirman el mínimo para este producto y el precio? Gracias.'
