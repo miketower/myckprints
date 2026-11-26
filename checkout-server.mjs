@@ -223,7 +223,7 @@ async function handle(request, response) {
     if (!(provider === 'paypal' ? paypalReady : mpReady)) throw new CheckoutError(503, 'Este método aún no tiene configuración de prueba.');
     const order = {
       id: randomUUID(), provider, product, quantity, printSides,
-      color: typeof color === 'string' && /^[A-Z]{2}$/.test(color) ? color : (product === 'playeras' ? 'BK' : 'WH'),
+      color: typeof color === 'string' && /^[A-Z]{2,3}$/.test(color) ? color : (product === 'playeras' ? 'BK' : 'WH'),
       total: quantity * unitPrice(pricing, printSides) + pricing.shipping,
       status: 'pendiente', createdAt: new Date().toISOString(),
     };

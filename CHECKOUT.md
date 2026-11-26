@@ -1,6 +1,6 @@
 # Pagos de prueba en Myckprints
 
-Usa Node.js 20 o posterior para servir el sitio y la API desde el mismo origen. El checkout está disponible para la playera de manga corta ($180 MXN por pieza, mínimo 10), la playera de manga larga ($220 MXN por pieza, mínimo 12) y la sudadera con capucha ($420 MXN por pieza, mínimo 10). La impresión en frente y reverso suma $40 MXN por prenda. El envío fijo es de $150 MXN. El descuento por volumen se consulta por separado.
+Usa Node.js 20 o posterior para servir el sitio y la API desde el mismo origen. El checkout está disponible para la playera de manga corta ($180 MXN por pieza, mínimo 10), la playera de manga larga ($220 MXN por pieza, mínimo 12), la sudadera con capucha ($420 MXN por pieza, mínimo 10) y la sudadera sin capucha ($390 MXN por pieza, mínimo 10). La impresión en frente y reverso suma $40 MXN por prenda. El envío fijo es de $150 MXN. El descuento por volumen se consulta por separado.
 
 Define estas variables en la terminal o en un gestor de secretos:
 

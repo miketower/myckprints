@@ -1,4 +1,4 @@
-import { checkoutProducts, extraPrintPrice, unitPrice } from './pricing.js?v=3';
+import { checkoutProducts, extraPrintPrice, unitPrice } from './pricing.js?v=4';
 
 // Approximate screen colors sampled from the JHK TSRA150 reference.
 const tsra150Colors = {
@@ -9,14 +9,19 @@ const tsra150Colors = {
   LM: '#89c83f', SY: '#ffc320', SA: '#d8ad7a',
 };
 
+const sweatshirtColors = {
+  PK: tsra150Colors.PK, PV: '#f5ac9c', LV: '#b29cc7', PB: '#009da9', WH: tsra150Colors.WH, BK: tsra150Colors.BK,
+  CHC: '#3e4b4c', DGM: '#707477', NY: tsra150Colors.NY, MG: tsra150Colors.MG, BT: tsra150Colors.BT,
+};
+
 const products = new Map([
   ['playeras', { name: 'Playera de manga corta', quote: 'Playeras', pricing: checkoutProducts.get('playeras'), front: [31, 25, 38.5, 45], back: [29, 19.3, 42, 50], colors: tsra150Colors }],
-  ['sudaderas', { name: 'Sudadera con capucha', quote: 'Sudaderas con capucha', pricing: checkoutProducts.get('sudaderas'), front: [36.7, 31.5, 27.6, 23.6], back: [28.8, 34.6, 40.6, 37.3], baseColor: 'SY', initialColor: 'WH', sizes: 'S–3XL', colors: { WH: tsra150Colors.WH, AS: '#d0d1cc', BK: tsra150Colors.BK, RB: tsra150Colors.RB, RD: tsra150Colors.RD, NY: tsra150Colors.NY } }],
+  ['sudaderas', { name: 'Sudadera con capucha', quote: 'Sudaderas con capucha', pricing: checkoutProducts.get('sudaderas'), front: [36.7, 31.5, 27.6, 23.6], back: [28.8, 34.6, 40.6, 37.3], baseColor: 'SY', initialColor: 'WH', sizes: 'S–2XL', colors: sweatshirtColors }],
   ['camisas', { name: 'Camisa', quote: 'Camisas', front: [54, 36, 12, 15] }],
   ['termos', { name: 'Termo', quote: 'Termos', front: [42, 35, 16, 33] }],
   ['playeras-polo', { name: 'Playera polo', quote: 'Playeras polo', front: [54, 34, 13, 16], back: [36, 29, 28, 34] }],
   ['gorras', { name: 'Gorra', quote: 'Gorras', front: [35, 35, 30, 21] }],
-  ['sudaderas-sin-capucha', { name: 'Sudadera sin capucha', quote: 'Sudaderas sin capucha', front: [36, 34, 28, 35] }],
+  ['sudaderas-sin-capucha', { name: 'Sudadera sin capucha', quote: 'Sudaderas sin capucha', pricing: checkoutProducts.get('sudaderas-sin-capucha'), front: [33, 23.3, 35, 38.8], back: [32.3, 22.8, 33.8, 39.8], baseColor: 'KG', initialColor: 'WH', sizes: 'S–2XL', colors: sweatshirtColors }],
   ['playeras-manga-larga', { name: 'Playera de manga larga', quote: 'Playeras de manga larga', pricing: checkoutProducts.get('playeras-manga-larga'), front: [31, 23, 38, 48], back: [29, 18, 41, 49], baseColor: 'WH', sizes: 'S–2XL', colors: { WH: tsra150Colors.WH, BK: tsra150Colors.BK, GM: tsra150Colors.GM, RD: tsra150Colors.RD, NY: tsra150Colors.NY } }],
 ]);
 
@@ -414,18 +419,21 @@ function initializeEditor(product) {
 
     const whiteTemplate = baseColor === 'WH';
     const yellowTemplate = baseColor === 'SY';
+    const greenTemplate = baseColor === 'KG';
     const yellowCenter = side === 'frente' ? 184 : 162;
-    // Use brightness for black fabric and coolness for white fabric against the warm backdrop.
+    // Separate the fabric from the studio backdrop using brightness or color.
     for (let i = 0; i < pixels.data.length; i += 4) {
       const shade = pixels.data[i] * .299 + pixels.data[i + 1] * .587 + pixels.data[i + 2] * .114;
       let mask = (162 - shade) / 130;
       if (whiteTemplate) mask = (pixels.data[i + 2] - pixels.data[i] + 5) / 5;
+      if (greenTemplate) mask = (150 - shade) / 80;
       if (yellowTemplate) mask = (pixels.data[i] - pixels.data[i + 2] - 12) / 72;
       const opacity = Math.max(0, Math.min(1, mask));
       for (let channel = 0; channel < 3; channel++) {
         const original = pixels.data[i + channel];
         let tinted = original + rgb[channel] - 24;
         if (whiteTemplate) tinted = rgb[channel] + (original - 230) * .65;
+        if (greenTemplate) tinted = rgb[channel] + (shade - 60) * .75;
         if (yellowTemplate) tinted = rgb[channel] + (shade - yellowCenter) * .75;
         pixels.data[i + channel] = original + (tinted - original) * opacity;
       }

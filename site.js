@@ -1,4 +1,4 @@
-import { checkoutProducts, printLabels } from './pricing.js?v=3';
+import { checkoutProducts, printLabels } from './pricing.js?v=4';
 
 const form = document.querySelector('#quote-form');
 const product = document.querySelector('#product');
