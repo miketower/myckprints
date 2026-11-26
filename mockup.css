@@ -97,3 +97,11 @@
 .garment-swatches input:checked + span{outline:2px solid var(--ink);outline-offset:2px}
 .garment-swatches input:focus-visible + span{outline:3px solid #00638b;outline-offset:2px}
 .garment-color-help{margin:12px 0 0}
+
+#mockup-order{border-top:1px solid #d8d3ca;padding-top:18px;margin-bottom:18px}
+#order-quantity{max-width:140px;margin-bottom:6px}
+.order-summary{display:grid;grid-template-columns:1fr auto;gap:7px 12px;font-size:14px}
+.order-summary dd{margin:0;text-align:right}
+#order-total{font-weight:900}
+.order-help{margin:8px 0 0}
+.order-help a{text-decoration:underline}

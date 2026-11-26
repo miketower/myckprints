@@ -8,7 +8,7 @@ const tsra150Colors = {
 };
 
 const products = new Map([
-  ['playeras', { name: 'Playera de manga corta', quote: 'Playeras', front: [31, 25, 38.5, 45], back: [29, 19.3, 42, 50], colors: tsra150Colors }],
+  ['playeras', { name: 'Playera de manga corta', quote: 'Playeras', pricing: { minimum: 10, unit: 180, shipping: 150 }, front: [31, 25, 38.5, 45], back: [29, 19.3, 42, 50], colors: tsra150Colors }],
   ['sudaderas', { name: 'Sudadera con capucha', quote: 'Sudaderas con capucha', front: [36, 39, 28, 20] }],
   ['camisas', { name: 'Camisa', quote: 'Camisas', front: [54, 36, 12, 15] }],
   ['termos', { name: 'Termo', quote: 'Termos', front: [42, 35, 16, 33] }],
@@ -85,7 +85,37 @@ function initializeEditor(product) {
   const quoteUrl = new URL('./', window.location.href);
   quoteUrl.searchParams.set('cotizar', product.quote);
   quoteUrl.hash = 'cotizar';
-  document.querySelector('#mockup-quote').href = quoteUrl.href;
+  const quoteLink = document.querySelector('#mockup-quote');
+  quoteLink.href = quoteUrl.href;
+  if (product.pricing) {
+    const { minimum, unit, shipping } = product.pricing;
+    const quantity = document.querySelector('#order-quantity');
+    const subtotal = document.querySelector('#order-subtotal');
+    const total = document.querySelector('#order-total');
+    const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', currencyDisplay: 'code' });
+    quantity.min = minimum;
+    quantity.value = minimum;
+    document.querySelector('#order-minimum').textContent = `Pedido mínimo: ${minimum} piezas.`;
+    document.querySelector('#order-unit').textContent = currency.format(unit);
+    document.querySelector('#order-shipping').textContent = currency.format(shipping);
+    document.querySelector('#mockup-order').hidden = false;
+
+    function updatePrice() {
+      const count = quantity.valueAsNumber;
+      const valid = quantity.validity.valid && Number.isSafeInteger(count * unit + shipping);
+      subtotal.textContent = valid ? currency.format(count * unit) : '—';
+      total.value = valid ? currency.format(count * unit + shipping) : '—';
+      if (valid) {
+        quoteUrl.searchParams.set('cantidad', count);
+      } else {
+        quoteUrl.searchParams.delete('cantidad');
+      }
+      quoteLink.href = quoteUrl.href;
+    }
+
+    quantity.addEventListener('input', updatePrice);
+    updatePrice();
+  }
   viewSwitch.hidden = !product.back;
   editor.hidden = false;
   showSide();

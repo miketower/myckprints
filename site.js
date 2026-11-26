@@ -13,9 +13,14 @@ function hideMessage() {
 
 form.addEventListener('input', hideMessage);
 
-const requestedProduct = new URLSearchParams(window.location.search).get('cotizar');
+const quoteParams = new URLSearchParams(window.location.search);
+const requestedProduct = quoteParams.get('cotizar');
 if (Array.from(product.options).some((option) => option.value === requestedProduct)) {
   product.value = requestedProduct;
+  const requestedQuantity = quoteParams.get('cantidad');
+  if (requestedQuantity && /^\d+$/.test(requestedQuantity) && Number.isSafeInteger(Number(requestedQuantity)) && Number(requestedQuantity) >= Number(quantity.min)) {
+    quantity.value = requestedQuantity;
+  }
 }
 
 form.addEventListener('submit', (event) => {
