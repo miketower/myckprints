@@ -20,7 +20,7 @@ const products = new Map([
   ['camisas', { name: 'Camisa', quote: 'Camisas', front: [54, 36, 12, 15] }],
   ['termos', { name: 'Termo', quote: 'Termos', front: [42, 35, 16, 33] }],
   ['playeras-polo', { name: checkoutProducts.get('playeras-polo').name, quote: 'Playeras polo', pricing: checkoutProducts.get('playeras-polo'), front: [58, 27.4, 11.1, 13.7], back: [34.7, 19.2, 31, 31.4], baseColor: 'NY', initialColor: checkoutProducts.get('playeras-polo').defaultColor, sizes: 'S–2XL', colors: poloColors }],
-  ['gorras', { name: 'Gorras de red DKPS', quote: 'Gorras', pricing: checkoutProducts.get('gorras'), front: [28, 34, 44, 21], baseColor: 'RB', defaultModel: '600' }],
+  ['gorras', { name: 'Gorras de red DKPS', quote: 'Gorras', pricing: checkoutProducts.get('gorras'), front: [24.6, 25.4, 51.2, 30.6], baseColor: 'RB', defaultModel: '600' }],
   ['sudaderas-sin-capucha', { name: 'Sudadera sin capucha', quote: 'Sudaderas sin capucha', pricing: checkoutProducts.get('sudaderas-sin-capucha'), front: [33, 23.3, 35, 38.8], back: [32.3, 22.8, 33.8, 39.8], baseColor: 'KG', initialColor: 'WH', sizes: 'S–2XL', colors: sweatshirtColors }],
   ['playeras-manga-larga', { name: 'Playera de manga larga', quote: 'Playeras de manga larga', pricing: checkoutProducts.get('playeras-manga-larga'), front: [31, 23, 38, 48], back: [29, 18, 41, 49], baseColor: 'WH', sizes: 'S–2XL', colors: { WH: tsra150Colors.WH, BK: tsra150Colors.BK, GM: tsra150Colors.GM, RD: tsra150Colors.RD, NY: tsra150Colors.NY } }],
 ]);
