@@ -225,11 +225,12 @@ async function handle(request, response) {
     }
     if (!printLabels.has(printSides)) throw new CheckoutError(400, 'Selecciona los lados a imprimir.');
     if (!['mercadopago', 'paypal'].includes(provider)) throw new CheckoutError(400, 'Selecciona un método de pago.');
+    const colorOptions = capModel?.colors ?? pricing.colors ?? (product === 'playeras-polo' ? poloColors : null);
     const validColor = typeof color === 'string' &&
-      (capModel ? Object.hasOwn(capModel.colors, color) : product === 'playeras-polo' ? Object.hasOwn(poloColors, color) : /^[A-Z]{2,3}$/.test(color));
+      (colorOptions ? Object.hasOwn(colorOptions, color) : /^[A-Z]{2,3}$/.test(color));
     if (capModel && !validColor) throw new CheckoutError(400, 'Selecciona un color disponible para el modelo de gorra.');
-    if (product === 'playeras-polo' && color != null && !validColor) {
-      throw new CheckoutError(400, 'Selecciona una combinación de color disponible para la polo.');
+    if (colorOptions && color != null && !validColor) {
+      throw new CheckoutError(400, 'Selecciona un color disponible para el producto.');
     }
     if (!(provider === 'paypal' ? paypalReady : mpReady)) throw new CheckoutError(503, 'Este método aún no tiene configuración de prueba.');
     const order = {

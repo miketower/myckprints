@@ -1,4 +1,4 @@
-import { capModels, checkoutProducts, printLabels } from './pricing.js?v=8';
+import { capModels, checkoutProducts, printLabels } from './pricing.js?v=9';
 
 const form = document.querySelector('#quote-form');
 const product = document.querySelector('#product');

@@ -1,4 +1,4 @@
-import { capColorNames, capModels, checkoutProducts, extraPrintPrice, poloColors, unitPrice } from './pricing.js?v=8';
+import { capColorNames, capModels, checkoutProducts, extraPrintPrice, poloColors, unitPrice } from './pricing.js?v=9';
 
 // Approximate screen colors sampled from the JHK TSRA150 reference.
 const tsra150Colors = {
@@ -17,7 +17,11 @@ const sweatshirtColors = {
 const products = new Map([
   ['playeras', { name: 'Playera de manga corta', quote: 'Playeras', pricing: checkoutProducts.get('playeras'), front: [31, 25, 38.5, 45], back: [29, 19.3, 42, 50], colors: tsra150Colors }],
   ['sudaderas', { name: 'Sudadera con capucha', quote: 'Sudaderas con capucha', pricing: checkoutProducts.get('sudaderas'), front: [36.7, 31.5, 27.6, 23.6], back: [28.8, 34.6, 40.6, 37.3], baseColor: 'SY', initialColor: 'WH', sizes: 'S–2XL', colors: sweatshirtColors }],
-  ['camisas', { name: 'Camisa', quote: 'Camisas', front: [54, 36, 12, 15] }],
+  ['playeras-deportivas', {
+    ...checkoutProducts.get('playeras-deportivas'),
+    pricing: checkoutProducts.get('playeras-deportivas'),
+    front: [31, 24, 38, 45], back: [30, 20, 40, 48], sizes: 'S–2XL',
+  }],
   ['termos', { name: 'Termo', quote: 'Termos', front: [42, 35, 16, 33] }],
   ['playeras-polo', { name: checkoutProducts.get('playeras-polo').name, quote: 'Playeras polo', pricing: checkoutProducts.get('playeras-polo'), front: [58, 27.4, 11.1, 13.7], back: [34.7, 19.2, 31, 31.4], baseColor: 'NY', initialColor: checkoutProducts.get('playeras-polo').defaultColor, sizes: 'S–2XL', colors: poloColors }],
   ['gorras', { name: 'Gorras de red DKPS', quote: 'Gorras', pricing: checkoutProducts.get('gorras'), front: [24.6, 25.4, 51.2, 30.6], baseColor: 'RB', defaultModel: '600' }],

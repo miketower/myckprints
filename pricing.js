@@ -30,10 +30,16 @@ export const capModels = Object.freeze({
 
 export const capColorNames = { RD: 'Rojo', WH: 'Blanco', BK: 'Negro', NY: 'Azul marino', RB: 'Azul rey', GR: 'Verde', BU: 'Vino' };
 
+const sportShirtColors = Object.freeze({
+  FUE: '#f474a0', WH: '#ffffff', BK: '#1c1c1a', RD: '#e51840', RB: '#006db1',
+  NY: '#202f40', TU: '#00b7be', SYF: '#dfea32', ORF: '#ffa121', LMF: '#58b744',
+});
+
 export const checkoutProducts = new Map([
   ['sudaderas', Object.freeze({ name: 'Sudadera con capucha', quote: 'Sudaderas con capucha', minimum: 10, unit: 420, shipping: 150 })],
   ['sudaderas-sin-capucha', Object.freeze({ name: 'Sudadera sin capucha', quote: 'Sudaderas sin capucha', minimum: 10, unit: 390, shipping: 150 })],
   ['playeras', Object.freeze({ name: 'Playera de manga corta', quote: 'Playeras', minimum: 10, unit: 180, shipping: 150 })],
+  ['playeras-deportivas', Object.freeze({ name: 'Playera deportiva Dry Fit', quote: 'Playera deportiva Dry Fit', minimum: 12, unit: 200, shipping: 150, defaultColor: 'BK', colors: sportShirtColors })],
   ['gorras', Object.freeze({ name: 'Gorra de red DKPS', quote: 'Gorras', minimum: 12, unit: 90, shipping: 150 })],
   ['playeras-polo', Object.freeze({ name: 'Polo Dry Fit', quote: 'Playeras polo', minimum: 12, unit: 260, shipping: 150, defaultColor: 'NY/SL' })],
   ['playeras-manga-larga', Object.freeze({ name: 'Playera de manga larga', quote: 'Playeras de manga larga', minimum: 12, unit: 220, shipping: 150 })],
