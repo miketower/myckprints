@@ -1,3 +1,5 @@
+import { checkoutProducts } from './pricing.js?v=2';
+
 const form = document.querySelector('#quote-form');
 const product = document.querySelector('#product');
 const quantity = document.querySelector('#quantity');
@@ -11,12 +13,25 @@ function hideMessage() {
   status.textContent = '';
 }
 
+const minimumHint = document.querySelector('#minimum');
+const defaultHint = minimumHint.textContent;
+const defaultMinimum = quantity.min;
+const minimums = new Map(Array.from(checkoutProducts.values(), ({ quote, minimum }) => [quote, minimum]));
+
+function updateMinimum() {
+  const minimum = minimums.get(product.value);
+  quantity.min = minimum ?? defaultMinimum;
+  minimumHint.textContent = minimum ? `Pedido mínimo: ${minimum} piezas.` : defaultHint;
+}
+
+product.addEventListener('change', updateMinimum);
 form.addEventListener('input', hideMessage);
 
 const quoteParams = new URLSearchParams(window.location.search);
 const requestedProduct = quoteParams.get('cotizar');
 if (Array.from(product.options).some((option) => option.value === requestedProduct)) {
   product.value = requestedProduct;
+  updateMinimum();
   const requestedQuantity = quoteParams.get('cantidad');
   if (requestedQuantity && /^\d+$/.test(requestedQuantity) && Number.isSafeInteger(Number(requestedQuantity)) && Number(requestedQuantity) >= Number(quantity.min)) {
     quantity.value = requestedQuantity;

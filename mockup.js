@@ -1,4 +1,4 @@
-import { shirtPricing } from "./pricing.js";
+import { checkoutProducts } from './pricing.js?v=2';
 
 // Approximate screen colors sampled from the JHK TSRA150 reference.
 const tsra150Colors = {
@@ -10,14 +10,14 @@ const tsra150Colors = {
 };
 
 const products = new Map([
-  ['playeras', { name: 'Playera de manga corta', quote: 'Playeras', pricing: shirtPricing, front: [31, 25, 38.5, 45], back: [29, 19.3, 42, 50], colors: tsra150Colors }],
+  ['playeras', { name: 'Playera de manga corta', quote: 'Playeras', pricing: checkoutProducts.get('playeras'), front: [31, 25, 38.5, 45], back: [29, 19.3, 42, 50], colors: tsra150Colors }],
   ['sudaderas', { name: 'Sudadera con capucha', quote: 'Sudaderas con capucha', front: [36, 39, 28, 20] }],
   ['camisas', { name: 'Camisa', quote: 'Camisas', front: [54, 36, 12, 15] }],
   ['termos', { name: 'Termo', quote: 'Termos', front: [42, 35, 16, 33] }],
   ['playeras-polo', { name: 'Playera polo', quote: 'Playeras polo', front: [54, 34, 13, 16], back: [36, 29, 28, 34] }],
   ['gorras', { name: 'Gorra', quote: 'Gorras', front: [35, 35, 30, 21] }],
   ['sudaderas-sin-capucha', { name: 'Sudadera sin capucha', quote: 'Sudaderas sin capucha', front: [36, 34, 28, 35] }],
-  ['playeras-manga-larga', { name: 'Playera de manga larga', quote: 'Playeras de manga larga', front: [37, 34, 26, 34], back: [37, 29, 26, 36] }],
+  ['playeras-manga-larga', { name: 'Playera de manga larga', quote: 'Playeras de manga larga', pricing: checkoutProducts.get('playeras-manga-larga'), front: [31, 23, 38, 48], back: [29, 18, 41, 49], baseColor: 'WH', sizes: 'S–2XL', colors: { WH: tsra150Colors.WH, BK: tsra150Colors.BK, GM: tsra150Colors.GM, RD: tsra150Colors.RD, NY: tsra150Colors.NY } }],
 ]);
 
 const slug = new URLSearchParams(window.location.search).get('producto');
@@ -55,10 +55,13 @@ function initializeEditor(product) {
   }
   let side = 'frente';
   let drag;
-  let color = 'BK';
+  const baseColor = product.baseColor || 'BK';
+  let color = baseColor;
 
   if (product.colors) {
     colorPicker.hidden = false;
+    colorValue.textContent = color;
+    document.querySelector('#garment-model').textContent = product.sizes || 'JHK TSRA150';
     for (const [code, hex] of Object.entries(product.colors)) {
       const option = document.createElement('label');
       const input = document.createElement('input');
@@ -366,7 +369,7 @@ function initializeEditor(product) {
   });
 
   function paintGarment() {
-    garmentPreview.hidden = !product.colors || color === 'BK';
+    garmentPreview.hidden = !product.colors || color === baseColor;
     if (garmentPreview.hidden) {
       return;
     }
@@ -376,13 +379,16 @@ function initializeEditor(product) {
     const pixels = context.getImageData(0, 0, width, height);
     const rgb = product.colors[color].slice(1).match(/../g).map((channel) => parseInt(channel, 16));
 
-    // The TSRA150 templates have black fabric on a pale studio background.
-    // Fade the tint at the edges so the background and shadows stay intact.
+    const whiteTemplate = baseColor === 'WH';
+    // Use brightness for black fabric and coolness for white fabric against the warm backdrop.
     for (let i = 0; i < pixels.data.length; i += 4) {
       const shade = pixels.data[i] * .299 + pixels.data[i + 1] * .587 + pixels.data[i + 2] * .114;
-      const opacity = Math.max(0, Math.min(1, (162 - shade) / 130));
+      const mask = whiteTemplate ? (pixels.data[i + 2] - pixels.data[i] + 5) / 5 : (162 - shade) / 130;
+      const opacity = Math.max(0, Math.min(1, mask));
       for (let channel = 0; channel < 3; channel++) {
-        pixels.data[i + channel] += (rgb[channel] - 24) * opacity;
+        const original = pixels.data[i + channel];
+        const tinted = whiteTemplate ? rgb[channel] + (original - 230) * .65 : original + rgb[channel] - 24;
+        pixels.data[i + channel] = original + (tinted - original) * opacity;
       }
     }
     context.putImageData(pixels, 0, 0);

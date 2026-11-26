@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { shirtPricing } from './pricing.js';
+import { checkoutProducts } from './pricing.js';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT || 3000);
@@ -62,7 +62,7 @@ function approvalUrl(value, hosts) {
   return url.href;
 }
 
-async function createPayment(order) {
+async function createPayment(order, pricing) {
   if (order.provider === 'mercadopago') {
     const data = await providerRequest(`${mpApi}/checkout/preferences`, {
       method: 'POST',
@@ -70,8 +70,8 @@ async function createPayment(order) {
       body: JSON.stringify({
         external_reference: order.id,
         items: [
-          { id: 'playeras', title: 'Playera de manga corta', quantity: order.quantity, unit_price: shirtPricing.unit, currency_id: 'MXN' },
-          { id: 'envio', title: 'Envío', quantity: 1, unit_price: shirtPricing.shipping, currency_id: 'MXN' },
+          { id: order.product, title: pricing.name, quantity: order.quantity, unit_price: pricing.unit, currency_id: 'MXN' },
+          { id: 'envio', title: 'Envío', quantity: 1, unit_price: pricing.shipping, currency_id: 'MXN' },
         ],
         back_urls: { success: returnUrl(order), pending: returnUrl(order), failure: returnUrl(order) },
       }),
@@ -87,7 +87,7 @@ async function createPayment(order) {
       intent: 'CAPTURE',
       purchase_units: [{
         reference_id: order.id,
-        description: `${order.quantity} playeras de manga corta con envío`,
+        description: `${order.quantity} × ${pricing.name} con envío`,
         amount: { currency_code: 'MXN', value: order.total.toFixed(2) },
       }],
       payment_source: { paypal: { experience_context: {
@@ -213,18 +213,20 @@ async function handle(request, response) {
   }
   if (pathname === '/api/checkout/orders' && request.method === 'POST') {
     const { provider, product, quantity, color } = (await readJson(request)) || {};
-    if (product !== 'playeras' || !Number.isInteger(quantity) || quantity < shirtPricing.minimum || quantity > 10000) {
-      throw new CheckoutError(400, 'Selecciona entre 10 y 10,000 playeras para esta prueba.');
+    const pricing = checkoutProducts.get(product);
+    if (!pricing) throw new CheckoutError(400, 'Este producto aún no está disponible para pagos de prueba.');
+    if (!Number.isInteger(quantity) || quantity < pricing.minimum || quantity > 10000) {
+      throw new CheckoutError(400, `Selecciona entre ${pricing.minimum} y 10,000 piezas para esta prueba.`);
     }
     if (!['mercadopago', 'paypal'].includes(provider)) throw new CheckoutError(400, 'Selecciona un método de pago.');
     if (!(provider === 'paypal' ? paypalReady : mpReady)) throw new CheckoutError(503, 'Este método aún no tiene configuración de prueba.');
     const order = {
       id: randomUUID(), provider, product, quantity,
-      color: typeof color === 'string' && /^[A-Z]{2}$/.test(color) ? color : 'BK',
-      total: quantity * shirtPricing.unit + shirtPricing.shipping,
+      color: typeof color === 'string' && /^[A-Z]{2}$/.test(color) ? color : (product === 'playeras-manga-larga' ? 'WH' : 'BK'),
+      total: quantity * pricing.unit + pricing.shipping,
       status: 'pendiente', createdAt: new Date().toISOString(),
     };
-    const payment = await createPayment(order);
+    const payment = await createPayment(order, pricing);
     await saveOrder({ ...order, providerId: payment.providerId });
     return json(response, 201, { url: payment.url });
   }
